@@ -36,6 +36,8 @@ class SimParams:
     margin: float = 3e-3
     sub_dt: float = 0.005                # MuJoCo substep; 0.1 s / sub_dt substeps per data step
     cmd_at_origin: bool = True           # commanded torque acts about the tool origin (fits data better)
+    inflate: dict = field(default_factory=dict)      # per tool-tip type ('cylinder','hex','square'): surface inflation [m]
+    socket_offset: tuple = (0.0, 0.0, 0.0, 0.0)      # session-level socket pose correction dx, dy, dz [m], dyaw [rad]
     extra: dict = field(default_factory=dict)
 
 
@@ -43,11 +45,14 @@ def params_from_cfg(c):
     """SimParams from a sysid2-style config (scales relative to the free-space fit)."""
     base = SimParams()
     sd, sm = c.get("damp_scale", 1.0), c.get("mass_scale", 1.0)
-    return SimParams(damping=tuple(np.array(base.damping) * np.array([sd, sd, sd, 1, 1, 1])),
-                     armature=tuple(np.array(base.armature) * np.array([sm, sm, sm, 1, 1, 1])),
+    da, ma = np.array(c.get("damp_axis", [1.0] * 6)), np.array(c.get("mass_axis", [1.0] * 6))
+    return SimParams(damping=tuple(np.array(base.damping) * np.array([sd, sd, sd, 1, 1, 1]) * da),
+                     armature=tuple(np.array(base.armature) * np.array([sm, sm, sm, 1, 1, 1]) * ma),
                      friction=c.get("friction", base.friction), solref_tc=c.get("tc", base.solref_tc),
                      solref_dr=c.get("dr", base.solref_dr),
-                     solimp=(c.get("d0", base.solimp[0]),) + tuple(base.solimp[1:]))
+                     solimp=(c.get("d0", base.solimp[0]),) + tuple(base.solimp[1:]),
+                     inflate={k: c[f"inflate_{k}"] for k in ("cylinder", "hexagon", "square") if f"inflate_{k}" in c},
+                     socket_offset=(c.get("dx", 0.0), c.get("dy", 0.0), c.get("dz", 0.0), c.get("dyaw", 0.0)))
 
 
 def default_params():
@@ -93,10 +98,20 @@ class AdmSim:
         self.tool_geoms = [g for g in range(m.ngeom) if m.geom_bodyid[g] == TOOL_BODY and collide(g)]
         self.env_geoms = [g for g in range(m.ngeom) if m.geom_bodyid[g] == 0 and collide(g)
                           and m.geom_type[g] != mujoco.mjtGeom.mjGEOM_PLANE]
+        self.tool_type = next((k for k in ("cylinder", "hexagon", "square") if k in split), "unknown")
         for g in self.tool_geoms:            # detect near contacts without creating force
-            m.geom_margin[g] = params.margin
+            a = params.inflate.get(self.tool_type, 0.0) if "tool_tip" in m.geom(g).name else 0.0
+            m.geom_margin[g] = params.margin + a      # force only when dist < a (surface inflated by a)
             m.geom_gap[g] = params.margin
-            m.geom_friction[g, 0] = params.friction   # MuJoCo uses the max over the geom pair
+        dx, dy, dz, dyaw = params.socket_offset
+        if any(params.socket_offset):
+            socket = [g for g in self.env_geoms if m.geom(g).name.startswith("socket")]
+            pivot = m.geom_pos[socket].mean(0)       # compiled origins differ per piece (mesh centroids)
+            qy = np.array([np.cos(dyaw / 2), 0.0, 0.0, np.sin(dyaw / 2)])
+            Ry = D.quat_to_mat(qy)
+            for g in socket:                         # rigid yaw about the common pivot, then translate
+                m.geom_pos[g] = pivot + Ry @ (m.geom_pos[g] - pivot) + np.array([dx, dy, dz])
+                m.geom_quat[g] = D.quat_mul(qy, m.geom_quat[g])
         for g in self.env_geoms:
             m.geom_friction[g, 0] = params.friction
             m.geom_solref[g] = [params.solref_tc, params.solref_dr]
