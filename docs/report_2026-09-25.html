@@ -1,0 +1,345 @@
+<title>接触动力学汇报</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@700;900&display=swap">
+<style>
+:root{
+  --bg:#F2F4F2; --surface:#FFFFFF; --ink:#18201D; --muted:#56625D; --line:#CBD3CE; --band:#E6EBE8;
+  --accent:#C8372D; --good:#2D7A55; --goodbg:#E3F2E9; --warn:#8A5A00; --warnbg:#FBF1DC; --bad:#A3322A; --badbg:#FBE8E6;
+  --sim:#2B5FA6; --simbg:#E6EEF9; --learn:#2D7A55; --learnbg:#E3F2E9;
+  --sans:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --serif:"Noto Serif SC","Songti SC",serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#111513; --surface:#191E1C; --ink:#E3E9E6; --muted:#9AA6A1; --line:#33403A; --band:#1E2522;
+    --accent:#F0685C; --good:#6CC79A; --goodbg:#152D20; --warn:#E0A94A; --warnbg:#33280F; --bad:#F08A80; --badbg:#3A1E1B;
+    --sim:#86ADE9; --simbg:#1A2637; --learn:#6CC79A; --learnbg:#152D20;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#111513; --surface:#191E1C; --ink:#E3E9E6; --muted:#9AA6A1; --line:#33403A; --band:#1E2522;
+  --accent:#F0685C; --good:#6CC79A; --goodbg:#152D20; --warn:#E0A94A; --warnbg:#33280F; --bad:#F08A80; --badbg:#3A1E1B;
+  --sim:#86ADE9; --simbg:#1A2637; --learn:#6CC79A; --learnbg:#152D20;
+}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.75;padding-inline:16px;padding-block:40px 80px}
+.wrap{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
+h1,h2,h3,h4{font-family:var(--serif);text-wrap:balance;margin:0;line-height:1.3}
+h1{font-size:clamp(28px,5vw,40px);font-weight:900}
+h2{font-size:24px;font-weight:900}
+h3{font-size:18px;font-weight:700}
+h4{font-size:15.5px;font-weight:700;font-family:var(--sans)}
+p{margin:0;max-width:50em}
+code{font-family:var(--mono);font-size:.88em}
+.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+header{display:flex;flex-direction:column;gap:14px}
+.lede{font-size:17px}
+.note{color:var(--muted);font-size:14px}
+.part{display:flex;flex-direction:column;gap:28px;border-top:3px solid var(--accent);padding-top:22px}
+.part-head{display:flex;flex-direction:column;gap:6px}
+.part-head .num{font-family:var(--mono);color:var(--accent);font-weight:600;font-size:13px;letter-spacing:.1em}
+section{display:flex;flex-direction:column;gap:14px}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:700px}
+th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:700;color:var(--muted);font-size:12px;background:var(--band);white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+tr.ours td{background:var(--goodbg)}
+tr.paper td{color:var(--muted)}
+tr.sep td{border-top:2px solid var(--line)}
+tr.dim td{color:var(--muted)}
+.wide table{min-width:1150px;font-size:12.5px}
+.tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;border:1px solid;white-space:nowrap;vertical-align:middle}
+.tag.ok{color:var(--good);border-color:var(--good);background:var(--goodbg)}
+.tag.part{color:var(--warn);border-color:var(--warn);background:var(--warnbg)}
+.tag.no{color:var(--bad);border-color:var(--bad);background:var(--badbg)}
+.tag.sim{color:var(--sim);border-color:var(--sim);background:var(--simbg)}
+.tag.learn{color:var(--learn);border-color:var(--learn);background:var(--learnbg)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.card h4{font-size:15px}
+.card p{font-size:13.5px}
+.card .ev{font-size:12.5px;color:var(--muted);border-top:1px dashed var(--line);padding-top:6px}
+figure{margin:0;display:flex;flex-direction:column;gap:10px}
+.scroll{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px}
+svg{display:block;max-width:100%;height:auto;font-family:var(--sans)}
+svg.map{min-width:720px;color:var(--muted)}
+svg.budget{min-width:560px;color:var(--muted)}
+figcaption{color:var(--muted);font-size:13.5px;max-width:56em}
+.pt{fill:var(--surface);stroke:var(--muted);stroke-width:1.5}
+.pt.ours{fill:var(--goodbg);stroke:var(--good);stroke-width:2.5}
+.pt.paper{fill:var(--simbg);stroke:var(--sim)}
+.lb{fill:var(--ink);font-size:11px}
+.lb.ours{fill:var(--good);font-weight:700}
+.ax{stroke:currentColor;stroke-width:1.2}
+.axl{fill:var(--muted);font-size:11px}
+.grid{stroke:var(--line);stroke-width:1;stroke-dasharray:3 4}
+.bar-noise{fill:var(--line)}
+.bar-fix{fill:var(--good)}
+.bar-left{fill:var(--accent)}
+.bt{fill:var(--ink);font-size:12px}
+.bt.m{fill:var(--muted);font-size:11px}
+ul.plain,ol.plain{margin:0;padding-left:1.25em;display:flex;flex-direction:column;gap:6px;max-width:52em}
+ol.plain li::marker{font-family:var(--mono);font-weight:600;color:var(--accent)}
+.rule{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:12px 16px;display:flex;flex-direction:column;gap:6px}
+.rule h4{font-size:15px}
+.rule p{font-size:14px}
+.dir{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:grid;grid-template-columns:120px 1fr;gap:14px}
+.dir .k{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--accent)}
+.dir .body{display:flex;flex-direction:column;gap:6px;min-width:0}
+.dir .body p{font-size:14px}
+.dir dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:13.5px}
+.dir dt{color:var(--muted);white-space:nowrap}
+.dir dd{margin:0}
+@media (max-width:560px){.dir{grid-template-columns:1fr}.dir dl{grid-template-columns:1fr}}
+a{color:var(--accent)}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">组会汇报 · 2026-09-25</div>
+  <h1>接触动力学建模：文献、结果与方向</h1>
+  <p class="lede">三个部分：① 已有方法都由同样的六个部件组成，差别在于每个部件是写死的物理还是学出来的，按这个骨架能看清谁做了什么、哪里没人做；② 我们在真实力控插入数据上的实验：混合模型（刚体仿真 + 按接触点修正）把 100 步推演位置误差从 4.80 mm 降到 3.55 mm，单核 CPU 每步 3 ms，纯学习的 Act-FIGNet 为 2.87 mm 但要 GPU；③ 从误差来源和项目目标推导出的修改方向，而不是继续试错。</p>
+  <p class="note">我们的数字都来自同一套评测（100 步开环推演，按轴 RMSE：位置 mm / 姿态 °）。论文数字取自 arXiv:2509.12151 v3 Table III。文献部分基于摘要和可访问全文，不确定处已标注。</p>
+</header>
+
+<!-- ================================================================= PART 1 -->
+<div class="part">
+  <div class="part-head"><span class="num">PART 1</span><h2>文献综述：共性骨架与各家的取舍</h2></div>
+
+  <section>
+    <h3>1.1 所有方法共享的六个部件</h3>
+    <p>一个接触动力学模型 = 几何怎么表示 + 怎么找接触 + 哪些定律写死 + 网络管什么 + 力和运动怎么耦合 + 用什么信号训练。两个旋钮决定一种方法的位置：<b>③ 物理先验写死多少</b>，<b>④ 学习单元切多细</b>。</p>
+    <div class="tbl"><table>
+      <tr><th style="width:120px">部件</th><th>要回答的问题</th><th>可选项（从物理到学习）</th></tr>
+      <tr><td>① 几何表示</td><td>物体用什么描述</td><td>解析参数 → 凸网格 → SDF / 点云 → 学出来的 SDF</td></tr>
+      <tr><td>② 接触结构</td><td>谁和谁在接触、在哪、法向</td><td>求解器接触点 → 面-面碰撞边 → 隐式（不显式表示）</td></tr>
+      <tr><td>③ 物理先验</td><td>哪些定律写死</td><td>全部（仿真器） → 非穿透 + 摩擦锥 + 力臂 → 只保留旋转等变 → 无</td></tr>
+      <tr><td>④ 学习单元</td><td>网络管什么</td><td>几个参数 → 全局修正 → 每个接触点 → 每个顶点 → 每个粒子</td></tr>
+      <tr><td>⑤ 力-运动耦合</td><td>力和运动是同一个量的两面吗</td><td>天然耦合（仿真） → 力臂合成 → 分别回归</td></tr>
+      <tr><td>⑥ 训练信号</td><td>用什么数据、怎么训</td><td>参数拟合 → 单步位姿 / F/T → 多步 / 在线数据 → 仿真预训练 + 真实微调</td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <h3>1.2 方法对照</h3>
+    <p class="note"><span class="tag sim">物理</span> 写死 · <span class="tag learn">学习</span> 学出来。表按"物理先验从多到少"排序。</p>
+    <div class="tbl wide"><table>
+      <tr><th>方法</th><th>① 几何</th><th>② 接触结构</th><th>③ 物理先验</th><th>④ 学习单元</th><th>⑤ 耦合</th><th>⑥ 训练信号</th><th>数据 / 任务</th><th>做到了什么</th><th>缺什么</th></tr>
+      <tr><td><b>MuJoCo + 系统辨识</b><br><span class="note">Act-FIGNet 的 baseline</span></td><td><span class="tag sim">物理</span> 凸网格</td><td><span class="tag sim">物理</span> 求解器</td><td>全部</td><td>几个参数</td><td>天然</td><td>参数拟合</td><td>真实插入</td><td>5.21 mm；最快；可解释</td><td>精度被接触模型封死；换设备要重标定</td></tr>
+      <tr><td><b>Tracy 等 2023</b><br><span class="note">在线线性力模型</span></td><td>无</td><td><span class="tag learn">隐式</span></td><td>准静态</td><td>全局线性</td><td>只有力</td><td>F/T 在线</td><td>真实连接器</td><td>几秒内在线拟合，可用于控制</td><td>接触被隐式编码，换几何失效</td></tr>
+      <tr><td><b>Ajay 等 2018</b><br><span class="note">仿真 + 随机残差</span></td><td><span class="tag sim">物理</span></td><td><span class="tag sim">物理</span></td><td>仿真</td><td>全局 RNN</td><td>整体状态</td><td>真实位姿</td><td>平面推动、弹跳</td><td>首次"混合优于两端"</td><td>2D 简单任务；无力传感器；不看几何</td></tr>
+      <tr><td><b>Heiden 等 2021</b><br><span class="note">NeuralSim</span></td><td><span class="tag sim">物理</span></td><td><span class="tag sim">物理</span></td><td>可微仿真</td><td>残差插在仿真内部</td><td>整体</td><td>真实位姿</td><td>sim2real 小系统</td><td>残差位置可选</td><td>需要可微仿真；接触简单</td></tr>
+      <tr><td><b>Jiang, Sun, Liu 2022</b><br><span class="note">数据增强接触模型</span></td><td><span class="tag sim">物理</span></td><td><span class="tag sim">物理</span></td><td>保留非穿透</td><td>整体接触冲量</td><td>冲量</td><td>真实位姿</td><td>弹跳、滑动</td><td>约束一致的学习</td><td>不以几何为条件；无装配</td></tr>
+      <tr><td><b>ContactNets 2020 / Bianchini 2023</b><br><span class="note">Posa 组</span></td><td><span class="tag learn">学习</span> SDF</td><td><span class="tag learn">学习</span> 接触雅可比</td><td>互补条件、摩擦锥作损失</td><td>物体级</td><td>隐式</td><td>真实位姿</td><td>方块抛掷</td><td>32 次抛掷 = 端到端 256 次；泛化更好</td><td>不是机器人操作；无控制、无 F/T</td></tr>
+      <tr><td><b>QuasiSim 2024</b><br><span class="note">局部接触网络</span></td><td><span class="tag sim">物理</span> 点云</td><td><span class="tag sim">物理</span> 接触对</td><td>参数化准物理</td><td><b>每个接触对</b> + 全局</td><td>残差力 + 摩擦</td><td>仿真到仿真</td><td>灵巧手迁移</td><td>结构最接近我们</td><td>未碰真实数据；无 F/T</td></tr>
+      <tr><td><b>GNS 2020 → MGN 2021 → FIGNet 2023</b></td><td><span class="tag learn">学习</span> 粒子→网格→面</td><td><span class="tag learn">学习</span> 邻域→碰撞边</td><td>等变性</td><td>每个顶点</td><td>–</td><td>仿真位姿</td><td>被动刚体</td><td>能学不连续接触</td><td>无控制输入；GPU</td></tr>
+      <tr><td><b>Act-FIGNet 2025</b></td><td><span class="tag learn">学习</span> 网格</td><td><span class="tag learn">学习</span> 面-面碰撞边</td><td>等变 + 力臂</td><td>每个顶点 + 力节点</td><td>每顶点力场 → 6 维</td><td>真实位姿 + F/T，单步 + 噪声</td><td>真实插入</td><td>2.87 mm，最准</td><td>10.8 ms GPU；控制器固定；无物理保证</td></tr>
+      <tr><td><b>Contact-Aware Neural Dynamics 2026</b></td><td><span class="tag learn">学习</span> 点云嵌入</td><td><span class="tag learn">学习</span> 接触概率</td><td>仿真只做预训练</td><td>整体（扩散）</td><td>无力</td><td>仿真预训练 + 真实微调</td><td>灵巧手 + 触觉</td><td>预训练省数据</td><td>推理时无仿真；长推演仍累积误差</td></tr>
+      <tr><td><b>Few-shot Neural Diff. Sim 2026</b></td><td><span class="tag learn">学习</span> 网格 GNN</td><td>可微 GJK</td><td>碰撞检测解析</td><td>每个顶点</td><td>–</td><td>33 条真实轨迹 + 合成</td><td>方块碰撞</td><td>可微、少样本</td><td>只用位姿；无机器人</td></tr>
+      <tr class="ours"><td><b>LCR（我们）</b></td><td><span class="tag sim">物理</span> 凸网格 + 局部 SDF 块</td><td><span class="tag sim">物理</span> 求解器点 + 3 mm 余量</td><td>仿真 + 非负法向 + 摩擦锥</td><td><b>每个接触点</b> + 注意力</td><td>力臂合成，同一修正进运动和 F/T</td><td>真实位姿 + F/T，线性化单步 + DAgger</td><td>真实插入</td><td>3.55 mm，CPU 3 ms</td><td>仍需辨识；3 种几何</td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <h3>1.3 定位图</h3>
+    <figure>
+      <div class="scroll">
+      <svg class="map" viewBox="0 0 760 420" role="img" aria-label="方法定位图：横轴从全部写死的物理到全部学习，纵轴从整体到逐点的学习粒度；LCR 位于偏物理一侧、粒度为接触点；Act-FIGNet 位于偏学习一侧、粒度为顶点；全局残差方法位于偏物理一侧但粒度为整体">
+        <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+        <line class="grid" x1="90" y1="330" x2="700" y2="330"/><line class="grid" x1="90" y1="230" x2="700" y2="230"/><line class="grid" x1="90" y1="130" x2="700" y2="130"/>
+        <line class="grid" x1="395" y1="40" x2="395" y2="360"/>
+        <line class="ax" x1="90" y1="360" x2="710" y2="360" marker-end="url(#ar)"/>
+        <line class="ax" x1="90" y1="360" x2="90" y2="30" marker-end="url(#ar)"/>
+        <text class="axl" x="95" y="382">写死的物理</text><text class="axl" x="700" y="382" text-anchor="end">全部学出来</text>
+        <text class="axl" x="395" y="382" text-anchor="middle">③ 物理先验多少</text>
+        <text class="axl" x="60" y="334" text-anchor="end">整体</text><text class="axl" x="60" y="234" text-anchor="end">接触点/对</text><text class="axl" x="60" y="134" text-anchor="end">顶点/表面点</text><text class="axl" x="60" y="50" text-anchor="end">粒子</text>
+        <text class="axl" x="20" y="200" transform="rotate(-90 20 200)" text-anchor="middle">④ 学习单元粒度</text>
+        <circle class="pt" cx="120" cy="330" r="7"/><text class="lb" x="132" y="326">MuJoCo + 辨识</text>
+        <circle class="pt" cx="190" cy="330" r="7"/><text class="lb" x="202" y="345">Ajay 2018 / 全局残差（失败格）</text>
+        <circle class="pt" cx="250" cy="330" r="7"/><text class="lb" x="262" y="318">Tracy 2023</text>
+        <circle class="pt" cx="235" cy="300" r="7"/><text class="lb" x="247" y="296">Jiang 2022（整体冲量）</text>
+        <circle class="pt" cx="330" cy="290" r="7"/><text class="lb" x="342" y="286">ContactNets（物体级）</text>
+        <circle class="pt" cx="300" cy="230" r="7"/><text class="lb" x="312" y="226">QuasiSim（仿真到仿真）</text>
+        <circle class="pt ours" cx="230" cy="230" r="9"/><text class="lb ours" x="150" y="212">LCR（我们）</text>
+        <circle class="pt ours" cx="250" cy="130" r="9"/><text class="lb ours" x="262" y="126">Skin（我们，表面点）</text>
+        <circle class="pt paper" cx="600" cy="130" r="8"/><text class="lb" x="612" y="126">Act-FIGNet / FIGNet</text>
+        <circle class="pt paper" cx="640" cy="60" r="7"/><text class="lb" x="652" y="56">GNS</text>
+        <circle class="pt paper" cx="560" cy="330" r="7"/><text class="lb" x="572" y="345">隐空间世界模型 / 推理时替换仿真</text>
+        <circle class="pt paper" cx="520" cy="130" r="7"/><text class="lb" x="440" y="112">Few-shot Neural Diff. Sim</text>
+      </svg>
+      </div>
+      <figcaption>左下"偏物理 + 整体修正"是已证明失败的格子；右上是纯学习的图仿真器，精度最高但要 GPU、无物理保证。"偏物理 + 接触点粒度"这个格子，在真实力传感器装配数据上之前是空的，我们占的就是它。</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h3>1.4 已经证明走不通、或代价不值得的路</h3>
+    <div class="cards">
+      <div class="card"><h4><span class="tag no">走不通</span> 全局残差</h4><p>④ 选整体：Ajay 2018 在 2D 任务上可以，Act-FIGNet 的 baseline 和我们的复现在插入任务上都发散。它可以在任何地方凭空加力，和约束打架。</p></div>
+      <div class="card"><h4><span class="tag no">走不通</span> 隐式编码接触</h4><p>② 不显式表示接触在哪（Tracy 2023）：控制够用，换几何失效。几何条件必须显式。</p></div>
+      <div class="card"><h4><span class="tag no">走不通</span> 纯隐空间世界模型</h4><p>③ 全部丢掉：分布外差、不可解释，与"泛化、可解释"目标冲突。</p></div>
+      <div class="card"><h4><span class="tag no">走不通</span> 学自由空间动力学</h4><p>我们的诊断：自由空间残差是噪声（见 2.4），多帧历史也解释不了。⑥ 里没有信号可学。</p></div>
+      <div class="card"><h4><span class="tag part">代价不值</span> 推理时替换仿真器</h4><p>F 类：预训练省数据，但失去不穿透等保证，等于回到纯学习。</p></div>
+      <div class="card"><h4><span class="tag part">代价不值</span> 精细几何标定</h4><p>我们的实验：可解释范围内的修正只带来 2–3%；再调就过拟合。而且与"更少标定"目标相悖。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h3>1.5 各家做了什么、还缺什么（按部件）</h3>
+    <div class="tbl"><table>
+      <tr><th>部件</th><th>做得最好的</th><th>没人做的 / 做得不够的</th></tr>
+      <tr><td>① 几何</td><td>FIGNet 系列：整张网格进图；ContactNets：学未知物体的 SDF</td><td>装配任务里"局部几何决定泛化"的直接证据（只有我们的 3 种工具，证据不足）</td></tr>
+      <tr><td>② 接触结构</td><td>FIGNet：面-面碰撞边，不依赖求解器</td><td>一步之内接触事件（开始/结束）的处理：所有方法都假设一步内不变</td></tr>
+      <tr><td>③ 物理先验</td><td>Posa 组：定律作损失；Jiang：约束保留</td><td>在真实力控装配数据上，"保留仿真器 + 约束 + 局部学习"的组合（我们填的空）</td></tr>
+      <tr><td>④ 学习单元</td><td>Act-FIGNet：每顶点；QuasiSim：每接触对</td><td>每接触对 + 真实 F/T（我们）；输出"接触参数"而非力的变体（无人做）</td></tr>
+      <tr><td>⑤ 耦合</td><td>Act-FIGNet 与我们：力臂合成</td><td>—（这一点已经是共识）</td></tr>
+      <tr><td>⑥ 训练信号</td><td>Act-FIGNet：F/T + 噪声注入；我们：线性化 + DAgger</td><td>多步/在线数据与真实 F/T 的结合；多套硬件（所有方法都绑定一台机器人一个控制器）</td></tr>
+    </table></div>
+  </section>
+</div>
+
+<!-- ================================================================= PART 2 -->
+<div class="part">
+  <div class="part-head"><span class="num">PART 2</span><h2>我们的实验与分析</h2></div>
+
+  <section>
+    <h3>2.1 设置</h3>
+    <div class="cards">
+      <div class="card"><h4>数据与协议</h4><p>Act-FIGNet 公开数据：UR10e + 六维力传感器，笛卡尔力控，10 Hz。圆柱、六边形训练（40 万步），方形只在测试集；另有专家插入、绕圈两种分布外策略。评测沿用论文：100 步推演位姿误差、单步 F/T；另加推演中 F/T 与每步耗时。</p></div>
+      <div class="card"><h4>基础仿真</h4><p>数据自带的简化 MuJoCo 场景 + 辨识的导纳动力学（逐轴虚拟质量 400–900 kg、阻尼 900–1300 N·s/m）+ 接触参数搜索 + 两项几何修正（圆柱网格膨胀、插座高度各 0.45 mm）。</p></div>
+      <div class="card"><h4>LCR</h4><p>MuJoCo 留 3 mm 余量找接触点；每个点在自己的坐标系里取 67 维特征（含局部 SDF 块）；共享 MLP + 1 层注意力；输出受约束的修正力（法向只推不拉、摩擦锥）；力臂合成，同一修正进运动和 F/T。约 4 万参数。</p></div>
+      <div class="card"><h4>训练</h4><p>预计算每个样本的一步线性化表，训练只做矩阵乘法（CPU 5–10 分钟，不需要可微仿真）；再用 DAgger 在模型自己走到的状态上重新线性化并微调。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h3>2.2 主结果</h3>
+    <div class="tbl"><table>
+      <tr><th>方法</th><th class="n">见过的工具</th><th class="n">方形（没见过）</th><th class="n">专家策略（OOD）</th><th class="n">绕圈（OOD）</th><th class="n">单步力 N</th><th class="n">每步耗时</th></tr>
+      <tr class="paper"><td>MuJoCo（论文辨识）</td><td class="n">5.21 / 0.92</td><td class="n">–</td><td class="n">–</td><td class="n">–</td><td class="n">3.54</td><td class="n">0.99 ms CPU</td></tr>
+      <tr class="paper"><td>MuJoCo + 全局残差（论文）</td><td class="n">6.63 / 1.47</td><td class="n">–</td><td class="n">–</td><td class="n">–</td><td class="n">1.12</td><td class="n">–</td></tr>
+      <tr class="paper"><td>Act-FIGNet（论文）</td><td class="n">2.87 / 0.64</td><td class="n">仅有图</td><td class="n">"约 4 倍"</td><td class="n">"保持较低"</td><td class="n">0.92</td><td class="n">10.8 ms GPU</td></tr>
+      <tr class="sep dim"><td>线性导纳公式（不看几何）</td><td class="n">–</td><td class="n">–</td><td class="n">–</td><td class="n">–</td><td class="n">1.20</td><td class="n">–</td></tr>
+      <tr><td>基础仿真，首次辨识</td><td class="n">5.34 / 1.17</td><td class="n">5.71 / 1.13</td><td class="n">10.37 / 1.67</td><td class="n">9.50 / 2.19</td><td class="n">2.62</td><td class="n">1.5 ms</td></tr>
+      <tr><td>基础仿真，精细辨识 + 几何修正</td><td class="n">4.68 / 1.09</td><td class="n">4.78 / 1.02</td><td class="n">9.60 / 1.42</td><td class="n">7.58 / 2.10</td><td class="n">2.5</td><td class="n">1.5 ms</td></tr>
+      <tr><td>+ 全局 MLP 残差（复现论文 baseline）</td><td class="n">12.05 / 3.78</td><td class="n">13.40 / 2.80</td><td class="n">15.08 / 2.95</td><td class="n">9.52 / 2.20</td><td class="n">1.01</td><td class="n">2.6 ms</td></tr>
+      <tr><td>纯黑盒 MLP</td><td class="n">8.35 / 1.92</td><td class="n">8.63 / 2.18</td><td class="n">16.79 / 1.76</td><td class="n">17.13 / 1.88</td><td class="n">0.92</td><td class="n">0.28 ms</td></tr>
+      <tr class="ours"><td>LCR（3 种子，首次辨识的基础）</td><td class="n">4.73 ± 0.01 / 0.96</td><td class="n">5.07 / 0.91</td><td class="n">9.08 / 1.22</td><td class="n">4.36 / 0.51</td><td class="n">1.14</td><td class="n">3.8 ms</td></tr>
+      <tr class="ours"><td>LCR（精细辨识 + 几何修正）</td><td class="n">4.18 / 0.91</td><td class="n">4.35 / 0.81</td><td class="n">8.18 / 1.22</td><td class="n">3.60 / 0.44</td><td class="n">1.15</td><td class="n">3.0 ms</td></tr>
+      <tr class="ours"><td><b>LCR + DAgger（最佳）</b></td><td class="n"><b>3.55 / 0.63</b></td><td class="n"><b>3.76 / 0.75</b></td><td class="n">8.37 / 1.62</td><td class="n">4.26 / 0.59</td><td class="n">1.27</td><td class="n">3.0 ms</td></tr>
+      <tr class="ours"><td>Skin：表面 SDF 场（无门控）</td><td class="n">发散（2 条不稳定）</td><td class="n">15.13 / 1.63</td><td class="n">发散（1 条不稳定）</td><td class="n">5.97 / 2.45</td><td class="n">1.35</td><td class="n">8.0 ms</td></tr>
+      <tr class="ours dim"><td>Skin：接触门控版</td><td class="n" colspan="6">训练中（第 5/20 轮验证损失 0.62，仍高于无门控的 0.53 和 LCR 的 0.42）；结果出来后补到这一行</td></tr>
+    </table></div>
+    <p class="note">姿态在 DAgger 后与 Act-FIGNet 持平（0.63° vs 0.64°），位置差距从 65% 缩到 24%。DAgger 让分布外姿态变差（专家 1.22° → 1.62°），因为在线数据只覆盖训练用的随机策略。</p>
+  </section>
+
+  <section>
+    <h3>2.3 每个实验教会了我们什么</h3>
+    <div class="tbl"><table>
+      <tr><th style="width:190px">实验</th><th>结果</th><th>结论</th></tr>
+      <tr><td>全局残差 vs 按接触点</td><td>12.05 mm（发散） vs 4.73 mm，同一基础仿真同一数据</td><td><span class="tag ok">成立</span> 混合路线可行，失败的是修正方式，不是路线</td></tr>
+      <tr><td>去掉局部几何特征（3 种子）</td><td>1 个种子在见过的工具上发散、方形翻倍；均值无差别</td><td><span class="tag part">初步</span> 几何特征带来稳定性；"帮助泛化"证据不足</td></tr>
+      <tr><td>单步 F/T vs 推演</td><td>黑盒单步 0.92 N（最好），推演最差</td><td><span class="tag ok">成立</span> 导纳控制下单步指标测的是控制器，不是接触</td></tr>
+      <tr><td>基础仿真精细辨识</td><td>5.34 → 4.80 mm，LCR 随之 4.73 → 4.24</td><td><span class="tag ok">成立</span> 基础越好，LCR 越好，收益叠加</td></tr>
+      <tr><td>DAgger 两轮</td><td>−14%、再 −2%；OOD 姿态变差</td><td><span class="tag part">递减</span> 累积误差是主要杠杆，但受在线数据的动作分布限制</td></tr>
+      <tr><td>控制器模型（选项 1）</td><td>线性修正力：自由空间 −15%，接触时 +60%；逐轴惯量：训练内变差</td><td><span class="tag no">否</span> 自由空间残差不可学（见 2.4）</td></tr>
+      <tr><td>几何标定（选项 2）</td><td>0.45 mm 修正 −2–3%；1 mm 时 OOD 姿态 +9%</td><td><span class="tag part">小</span> 只保留物理可解释的量</td></tr>
+      <tr><td>Skin 表面场（无门控）</td><td>验证损失 0.53 vs LCR 0.42（力更准、运动更差）；推演在见过的工具和专家策略上发散，方形 15.1 mm，绕圈 6.0 mm；每步 8 ms</td><td><span class="tag no">否</span> 允许"隔空出力"就退化为全局残差的症状；物理约束是必要条件，不是装饰</td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <h3>2.4 误差从哪里来（验证集，单步位置误差的平方和分解）</h3>
+    <figure>
+      <div class="scroll">
+      <svg class="budget" viewBox="0 0 640 170" role="img" aria-label="单步位置平方误差分解：31% 来自自由空间且不可学；69% 来自接触步，其中 LCR 已去掉一部分，其余集中在接触切换的少数步">
+        <rect class="bar-noise" x="20" y="40" width="186" height="34"/>
+        <rect class="bar-fix" x="206" y="40" width="72" height="34"/>
+        <rect class="bar-left" x="278" y="40" width="342" height="34"/>
+        <text class="bt" x="24" y="30">自由空间 31%</text><text class="bt m" x="24" y="94">相邻步相关 ≈ 0，强回归器只能解释 6–7%：噪声</text>
+        <text class="bt" x="210" y="30">LCR 已修</text><text class="bt m" x="210" y="112">接触步运动误差 −17%</text>
+        <text class="bt" x="290" y="30">接触步，尚未修复</text><text class="bt m" x="290" y="94">其中 5% 的步（接触开始/结束）占总平方误差的 45%</text>
+        <text class="bt m" x="290" y="112">LCR 把这些步的力误差减半，运动误差只减一小部分</text>
+        <line class="ax" x1="20" y1="135" x2="620" y2="135"/>
+        <text class="bt m" x="20" y="155">比例按平方误差；数据来自 s2 验证集，LCR + DAgger 第 2 轮模型</text>
+      </svg>
+      </div>
+      <figcaption>这张图决定了 Part 3 的方向：左边修不了，中间已经修了，剩下能动的主要是右边。右边的问题是"接触事件"（一步之内接触开始或结束）而不是"力的数值"。</figcaption>
+    </figure>
+    <div class="tbl"><table>
+      <tr><th>情况</th><th class="n">样本占比</th><th class="n">基础仿真 位置误差</th><th class="n">LCR 位置误差</th><th class="n">力误差 基础 → LCR</th></tr>
+      <tr><td>没有接触</td><td class="n">15%</td><td class="n">0.095 mm</td><td class="n">0.095 mm（不变）</td><td class="n">0.42 → 0.42 N</td></tr>
+      <tr><td>1–2 个接触点</td><td class="n">24%</td><td class="n">0.073</td><td class="n">0.061</td><td class="n">2.69 → 1.26 N</td></tr>
+      <tr><td>3–4 个接触点</td><td class="n">39%</td><td class="n">0.071</td><td class="n">0.059</td><td class="n">2.66 → 1.32 N</td></tr>
+      <tr><td>5–10 个接触点</td><td class="n">22%</td><td class="n">0.078</td><td class="n">0.060</td><td class="n">3.39 → 1.96 N</td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <h3>2.5 和 Act-FIGNet 差的 0.7 mm 可能在哪</h3>
+    <p>自由空间的噪声双方都逃不掉，所以差距只能来自接触步和误差累积。按证据强弱排：</p>
+    <div class="tbl"><table>
+      <tr><th style="width:230px">假设</th><th>依据</th><th>证据</th><th>怎么验证（便宜）</th></tr>
+      <tr><td>H1 一步内的接触事件</td><td>5% 的步占 45% 误差；我们假设修正力在 0.1 s 内不变，Act-FIGNet 也是单步，但它的网络看到的是整张网格的面-面关系，对"快碰上"更敏感</td><td><span class="tag ok">强</span></td><td>把误差最大的 5% 的步按"接触数是否变化"分组；修正力改为每 25–50 ms 调用一次</td></tr>
+      <tr><td>H2 测量滤波</td><td>论文说位姿和 F/T 为同步做过滤波；"用 F_{t+1} 解释运动和 F_t 一样好"；学习模型会自然复现滤波后的平滑动力学，物理仿真不会</td><td><span class="tag part">中</span></td><td>在推演输出上叠一个辨识出的线性滤波器；或把 a_{t+1} 作为输入（开环推演里动作序列已知）</td></tr>
+      <tr><td>H3 误差累积</td><td>DAgger 一轮 −14%，说明累积是主要杠杆；但第二轮饱和</td><td><span class="tag ok">强</span></td><td>多步展开的线性化损失（串接 2–3 步），不改变在线数据分布</td></tr>
+      <tr><td>H4 力模型的表达能力</td><td>Skin 没有带来收益；去掉几何特征均值也不变</td><td><span class="tag no">弱</span></td><td>已验证，不再投入</td></tr>
+      <tr><td>H5 基础求解器的接触分辨率</td><td>子步 5 ms、软接触；求解器可能低估刚性接触的瞬态</td><td><span class="tag part">中</span></td><td>子步改 2 ms 重跑基础评测，看 100 步误差是否下降</td></tr>
+    </table></div>
+  </section>
+</div>
+
+<!-- ================================================================= PART 3 -->
+<div class="part">
+  <div class="part-head"><span class="num">PART 3</span><h2>修改方向：从目标和误差来源推导</h2></div>
+
+  <section>
+    <h3>3.1 设计原则</h3>
+    <div class="cards">
+      <div class="rule"><h4>项目要的是什么</h4><p>更快、更少标定、跨几何泛化。精度只是在这个 benchmark 上证明"混合路线不输"的手段，不是目的。LEGO Technic 装配需要的是"给 CAD 就能预测接触力和运动"。</p></div>
+      <div class="rule"><h4>不能动的</h4><p>仿真器负责的部分（不穿透、导纳动力学、自由空间）不学；每个修正必须落在真实接触处并受物理约束。Skin 的失败再次证明：放宽这一条就退化为全局残差。</p></div>
+      <div class="rule"><h4>该学的</h4><p>只学仿真器算错的、而且数据里有信号的部分：接触步的力，尤其是接触事件附近。改动前先用诊断确认目标误差项存在且可学。</p></div>
+      <div class="rule"><h4>停止的</h4><p>不再换表示（skin、图）来碰运气；不再调几何标定；不再加 DAgger 轮数。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h3>3.2 三条主线</h3>
+    <div class="dir"><span class="k">A · 精度</span><div class="body">
+      <h4>针对 2.4 右侧那块：接触事件 + 累积（H1、H3）</h4>
+      <p>修正力改为一步内多次调用（每 25–50 ms），特征计算便宜；训练损失改为多步展开的线性化（2–3 步）。都不改变模型结构，只改"何时施加、如何监督"。</p>
+      <dl><dt>先做的验证</dt><dd>把误差最大的 5% 的步按"接触数是否变化"分组，确认长尾确实来自接触事件；半天</dd>
+      <dt>判据</dt><dd>见过的工具位置误差从 3.55 mm 降到 3.2 以下，且 OOD 不变差</dd>
+      <dt>成本</dt><dd>预计算改一次（30 分钟）、训练 10 分钟</dd></dl>
+    </div></div>
+    <div class="dir"><span class="k">B · 少标定</span><div class="body">
+      <h4>证明 LCR 能吸收基础仿真的参数误差</h4>
+      <p>在只有自由空间质量阻尼、接触参数取默认值的基础仿真上训练 LCR，与"辨识过的基础 + LCR"比较。如果差距小，就能主张"网络替代了大部分标定"，这是相对纯学习方法的实质优势（它们用 40 万步数据换标定，我们用 2 万步辨识 + 训练）。</p>
+      <dl><dt>判据</dt><dd>未辨识基础上的 LCR 位置误差 ≤ 辨识基础上 LCR 的 1.1 倍</dd>
+      <dt>成本</dt><dd>一次完整流程，约 45 分钟；不改代码</dd>
+      <dt>延伸</dt><dd>网络输出"接触参数"（有效间隙、摩擦、刚度）而不是力的变体：可解释性最高，标定完全由网络承担</dd></dl>
+    </div></div>
+    <div class="dir"><span class="k">C · 泛化</span><div class="body">
+      <h4>把几何种类从 3 种扩到几十种</h4>
+      <p>"局部几何特征带来泛化"目前只有一个方形工具的证据。LEGO Technic 零件（pin、axle、beam 孔，不同长度和摩擦版本）是最自然的扩展，也是项目本体。先在仿真里用 LDraw 几何批量生成，再采少量真实 F/T 校准。</p>
+      <dl><dt>判据</dt><dd>按零件类别留出测试集，LCR 的误差随训练零件数增加而下降，去掉几何特征的版本不下降</dd>
+      <dt>成本</dt><dd>数据采集为主；模型不用改</dd></dl>
+    </div></div>
+  </section>
+
+  <section>
+    <h3>3.3 建议顺序</h3>
+    <ol class="plain">
+      <li><b>本周：</b>A 的诊断（长尾归因，半天）+ B（45 分钟，不改代码）。两个结果都直接改变论文的主张。</li>
+      <li><b>下周：</b>按诊断结果实施 A 的一步内多次调用和多步损失。</li>
+      <li><b>之后：</b>C，并把可解释性实验补上（画出学到的接触力分布，对照摩擦锥）。</li>
+    </ol>
+    <p class="note">与 Act-FIGNet 的定位：不追求在它的 benchmark 上超过它，而是在精度接近的前提下，证明快 3 倍以上、只用 CPU、可解释、并且（待验证）少标定、跨几何泛化。这是一篇"物理结构化混合模型"的论文，不是一篇"新的图网络"的论文。</p>
+  </section>
+</div>
+</div>
