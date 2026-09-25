@@ -146,7 +146,7 @@ a{color:var(--accent)}
   </section>
 
   <section>
-    <h3>1.3 定位图</h3>
+    <h3>1.3 定位图：这是设计选择，不是表现</h3>
     <figure>
       <div class="scroll">
       <svg class="map" viewBox="0 0 760 420" role="img" aria-label="方法定位图：横轴从全部写死的物理到全部学习，纵轴从整体到逐点的学习粒度；LCR 位于偏物理一侧、粒度为接触点；Act-FIGNet 位于偏学习一侧、粒度为顶点；全局残差方法位于偏物理一侧但粒度为整体">
@@ -173,6 +173,30 @@ a{color:var(--accent)}
       </svg>
       </div>
       <figcaption>左下"偏物理 + 整体修正"：在这个插入任务上，论文的实现和我们的复现都比不加修正更差（Ajay 2018 在 2D 推动上是有效的，所以是任务相关，不是普遍失败）；右上是纯学习的图仿真器，精度最高但要 GPU、无物理保证。"偏物理 + 接触点粒度"这个格子，在真实力传感器装配数据上之前是空的，我们占的就是它。</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h3>1.3b 上一张图是设计，这一张才是表现</h3>
+    <figure>
+      <div class="scroll">
+      <svg class="budget" viewBox="0 0 640 300" role="img" aria-label="表现图：横轴每步耗时（对数），纵轴 100 步推演位置误差；LCR 在左下（3 ms，3.55 mm），Act-FIGNet 更准但慢且需 GPU（10.8 ms，2.87 mm），MuJoCo 快但不准，全局残差和黑盒又慢又不准">
+        <line class="grid" x1="70" y1="60" x2="600" y2="60"/><line class="grid" x1="70" y1="120" x2="600" y2="120"/><line class="grid" x1="70" y1="180" x2="600" y2="180"/>
+        <line class="ax" x1="70" y1="240" x2="610" y2="240" marker-end="url(#ar)"/>
+        <line class="ax" x1="70" y1="240" x2="70" y2="30" marker-end="url(#ar)"/>
+        <text class="axl" x="40" y="244" text-anchor="end">0</text><text class="axl" x="40" y="184" text-anchor="end">4</text><text class="axl" x="40" y="124" text-anchor="end">8</text><text class="axl" x="40" y="64" text-anchor="end">12 mm</text>
+        <text class="axl" x="120" y="262" text-anchor="middle">0.3</text><text class="axl" x="240" y="262" text-anchor="middle">1</text><text class="axl" x="360" y="262" text-anchor="middle">3</text><text class="axl" x="480" y="262" text-anchor="middle">10 ms/步（对数）</text>
+        <text class="axl" x="340" y="285" text-anchor="middle">每步耗时 → 越左越快</text>
+        <text class="axl" x="18" y="140" transform="rotate(-90 18 140)" text-anchor="middle">100 步位置误差 → 越低越准</text>
+        <!-- x = 240 + 120*log10(ms); y = 240 - 15*mm -->
+        <circle class="pt" cx="177" cy="115" r="7"/><text class="lb" x="189" y="111">纯黑盒 MLP  8.35 mm</text>
+        <circle class="pt" cx="290" cy="59" r="7"/><text class="lb" x="302" y="55">仿真 + 全局残差  12.05 mm</text>
+        <circle class="pt" cx="261" cy="170" r="7"/><text class="lb" x="273" y="166">MuJoCo + 辨识  4.68 mm</text>
+        <circle class="pt ours" cx="297" cy="187" r="9"/><text class="lb ours" x="309" y="200">LCR + DAgger  3.55 mm，CPU</text>
+        <circle class="pt paper" cx="364" cy="197" r="8"/><text class="lb" x="376" y="216">Act-FIGNet  2.87 mm，GPU</text>
+      </svg>
+      </div>
+      <figcaption>见过的工具，100 步推演。Act-FIGNet 的耗时是论文报的 GPU 数字，我们是单核 CPU，所以它的实际差距只会更大。这张图上"左下角"才是"又准又快"：我们和 Act-FIGNet 相差 0.7 mm，快 3.6 倍且不需要 GPU；比基础仿真慢 2 倍，准 24%。</figcaption>
     </figure>
   </section>
 
