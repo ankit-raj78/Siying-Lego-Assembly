@@ -104,6 +104,8 @@ def main():
         vd = float(np.mean([x[2].item() for x in v]))
         hist.append({"epoch": ep, "train": float(np.mean(tl)), "val": vl, "val_obs": vo, "val_dyn": vd})
         print(f"[{name}] epoch {ep:2d} train {np.mean(tl):.4f}  val {vl:.4f} (obs {vo:.4f}, dyn {vd:.4f})  {time.time()-t0:.0f}s", flush=True)
+        os.makedirs("results/models", exist_ok=True)
+        torch.save({"kind": a.model, "state": model.state_dict(), "stats": st}, f"results/models/{name}_last.pt")
         if vl < best:
             best = vl
             os.makedirs("results/models", exist_ok=True)
