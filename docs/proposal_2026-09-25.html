@@ -1,14 +1,12 @@
-<title>结构提案</title>
+<title>Contact Dynamics Proposal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,700;8..60,900&display=swap">
 <style>
 :root{
   --bg:#F2F4F2; --surface:#FFFFFF; --ink:#18201D; --muted:#56625D; --line:#CBD3CE; --band:#E6EBE8;
   --accent:#C8372D; --sim:#2B5FA6; --simbg:#E6EEF9; --learn:#2D7A55; --learnbg:#E3F2E9; --data:#8A5A00; --databg:#FBF1DC;
-  --sans:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
-  --serif:"Noto Serif SC","Songti SC",serif;
-  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --sans:"Inter",system-ui,sans-serif; --serif:"Source Serif 4",Georgia,serif;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -22,224 +20,174 @@
   --bg:#111513; --surface:#191E1C; --ink:#E3E9E6; --muted:#9AA6A1; --line:#33403A; --band:#1E2522;
   --accent:#F0685C; --sim:#86ADE9; --simbg:#1A2637; --learn:#6CC79A; --learnbg:#152D20; --data:#E0A94A; --databg:#33280F;
 }
-body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.75;padding-inline:16px;padding-block:40px 80px}
-.wrap{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:52px}
-h1,h2,h3{font-family:var(--serif);text-wrap:balance;margin:0;line-height:1.3}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.65;padding-inline:16px;padding-block:40px 80px}
+.wrap{max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:48px}
+h1,h2{font-family:var(--serif);text-wrap:balance;margin:0;line-height:1.25}
 h1{font-size:clamp(26px,5vw,36px);font-weight:900}
-h2{font-size:22px;font-weight:900}
-h3{font-size:16px;font-weight:700;font-family:var(--sans)}
-p{margin:0;max-width:50em}
-code{font-family:var(--mono);font-size:.88em}
+h2{font-size:22px;font-weight:700}
+p{margin:0;max-width:46em}
 .eyebrow{font-size:12px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
-.note{color:var(--muted);font-size:14px}
-section{display:flex;flex-direction:column;gap:16px;border-top:2px solid var(--accent);padding-top:22px}
-.num{font-family:var(--mono);color:var(--accent);font-weight:600;font-size:13px;letter-spacing:.1em}
+section{display:flex;flex-direction:column;gap:14px;border-top:2px solid var(--accent);padding-top:20px}
+.num{font-family:var(--sans);color:var(--accent);font-weight:700;font-size:12px;letter-spacing:.1em}
 figure{margin:0;display:flex;flex-direction:column;gap:10px}
 .scroll{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px}
 svg{display:block;max-width:100%;height:auto;font-family:var(--sans);color:var(--ink)}
-svg.flow{min-width:900px}
-svg.choices{min-width:860px}
-figcaption{color:var(--muted);font-size:13.5px;max-width:56em}
+svg.flow{min-width:760px}
+svg.choices{min-width:820px}
+figcaption{color:var(--muted);font-size:13.5px;max-width:52em}
 .box{fill:var(--surface);stroke:currentColor;stroke-width:1.2}
 .box.sim{fill:var(--simbg);stroke:var(--sim)}
 .box.learn{fill:var(--learnbg);stroke:var(--learn)}
 .box.data{fill:var(--databg);stroke:var(--data)}
 .box.dim{stroke-dasharray:4 3;stroke:var(--muted)}
-.t{fill:var(--ink);font-size:12px}
+.t{fill:var(--ink);font-size:12.5px}
 .t.b{font-weight:700}
-.t.s{font-size:10.5px;fill:var(--muted)}
+.t.s{font-size:11px;fill:var(--muted)}
 .e{stroke:currentColor;stroke-width:1.3;fill:none}
 .e.hi{stroke:var(--accent);stroke-width:2}
 .e.dim{stroke:var(--muted);stroke-dasharray:4 3}
-.el{fill:var(--muted);font-size:10.5px}
+.el{fill:var(--muted);font-size:11px}
 .el.hi{fill:var(--accent);font-weight:700}
-.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
-.sw{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:5px;border:1px solid}
-.sw.sim{background:var(--simbg);border-color:var(--sim)} .sw.learn{background:var(--learnbg);border-color:var(--learn)} .sw.data{background:var(--databg);border-color:var(--data)}
-.rq{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px}
-.rq .k{font-family:var(--mono);color:var(--muted);font-size:12.5px;white-space:nowrap;padding-top:2px}
-.rq .old{color:var(--muted);text-decoration:line-through}
-.rq .new{font-weight:500}
-.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
-table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:720px}
-th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
-th{font-weight:700;color:var(--muted);font-size:12px;background:var(--band);white-space:nowrap}
-tr:last-child td{border-bottom:none}
-.tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;border:1px solid;white-space:nowrap}
-.tag.sim{color:var(--sim);border-color:var(--sim);background:var(--simbg)}
-.tag.learn{color:var(--learn);border-color:var(--learn);background:var(--learnbg)}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:12px}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
-.card p{font-size:13.5px}
-.card .why{font-size:12.5px;color:var(--muted);border-top:1px dashed var(--line);padding-top:6px}
-ul.plain{margin:0;padding-left:1.25em;display:flex;flex-direction:column;gap:6px;max-width:52em}
-/* choices figure marks */
+.rq{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;font-size:14.5px}
+.rq .q{font-weight:700;font-size:16px;font-family:var(--serif)}
+.rq ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px}
+.goals{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px}
+.goal{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-size:14px}
+.goal b{display:block;font-size:15px;margin-bottom:2px}
 .axis{stroke:var(--line);stroke-width:2}
-.tick{stroke:var(--line);stroke-width:1}
-.ours{fill:var(--learn);stroke:var(--surface);stroke-width:2}
-.theirs{fill:none;stroke:var(--sim);stroke-width:2}
+.cand{fill:var(--learn);stroke:var(--surface);stroke-width:2}
+.ref{fill:none;stroke:var(--sim);stroke-width:2}
 .mj{fill:var(--muted);stroke:var(--surface);stroke-width:1.5}
 .lab{fill:var(--ink);font-size:11.5px}
-.lab.m{fill:var(--muted);font-size:10.5px}
-.lab.h{font-weight:700;font-size:12.5px}
+.lab.m{fill:var(--muted);font-size:11px}
+.lab.h{font-weight:700;font-size:13px}
+ul.plain{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px;max-width:48em}
 </style>
 
 <div class="wrap">
 <header style="display:flex;flex-direction:column;gap:12px">
-  <div class="eyebrow">组会 · 结构提案 · 2026-09-25</div>
-  <h1>Technic 装配的接触动力学：我想用什么结构</h1>
-  <p>目标是给 LEGO Technic 的 pin / axle 插入建一个动力学模型：输入 CAD 和指令，输出运动和受力，供下游控制用。要求<b>快</b>（能进 MPC 的循环）、<b>少标定</b>（换零件不重新采数据）、<b>跨几何泛化</b>（没见过的零件也能用）。这一页讲我打算怎么搭，以及为什么这么搭。</p>
-  <div class="legend"><span><span class="sw data"></span>输入 / 数据</span><span><span class="sw sim"></span>写死的物理</span><span><span class="sw learn"></span>学的部分</span></div>
+  <div class="eyebrow">Group meeting · proposal · Sep 25, 2026</div>
+  <h1>A hybrid contact-dynamics model for Technic insertion</h1>
+  <p>A dynamics model for LEGO Technic pin / axle insertion: given part CAD and a command, predict motion and contact force for downstream control. The proposal is to keep a rigid-body simulator in the loop and let a small network correct it only where contact happens.</p>
+  <div class="goals">
+    <div class="goal"><b>Fast</b>Runs inside an MPC loop on CPU.</div>
+    <div class="goal"><b>Little calibration</b>New parts should not need new data.</div>
+    <div class="goal"><b>Generalizes across geometry</b>Works on parts it has not seen.</div>
+  </div>
 </header>
 
-<!-- ============================================================ 1 RQ -->
 <section>
-  <div><span class="num">01</span></div>
-  <h2>Research question 的更新</h2>
+  <div class="num">01</div>
+  <h2>Research question</h2>
   <div class="rq">
-    <span class="k">原来</span><span class="old">能不能从 CAD 直接预测插入过程的受力和动力学？</span>
-    <span class="k">现在</span><span class="new">刚体仿真器已经能从 CAD 算出大致的运动和力，但接触模型不准。<b>如果只让网络学"仿真器在接触点上算错了多少"，能不能用很小的代价把精度拉到纯学习模型的水平，同时保住仿真器的速度、物理保证和跨几何能力？</b></span>
-    <span class="k">拆开</span><span class="new">
-      RQ1 精度：按接触点修正 + 物理约束，是否比"整体修正"和"从零学"更准、更稳？<br>
-      RQ2 标定：网络能否吸收掉大部分接触参数的标定，只留控制器几个数？<br>
-      RQ3 泛化：接触点的局部几何特征，是否足以让模型用到没见过的零件上？
-    </span>
+    <div class="q">A rigid-body simulator already predicts insertion roughly from CAD; its contact model is what is inaccurate. If a network learns only the simulator's error at the contact points, can we reach the accuracy of fully learned simulators while keeping the simulator's speed, physical guarantees and geometry generalization?</div>
+    <ul>
+      <li><b>Accuracy</b> — is per-contact correction more accurate and more stable than a global correction or learning from scratch?</li>
+      <li><b>Calibration</b> — can the network absorb most contact-parameter tuning, leaving only a few controller parameters?</li>
+      <li><b>Generalization</b> — are local geometry features at the contact enough to transfer to unseen parts?</li>
+    </ul>
   </div>
-  <p class="note">变化在于：不再问"能不能预测"，而是问"仿真器 + 局部学习"这个组合是不是正确的结构。前者太宽，后者可以用消融实验逐条回答。</p>
 </section>
 
-<!-- ============================================================ 2 SYSTEM -->
 <section>
-  <div><span class="num">02</span></div>
-  <h2>系统结构</h2>
+  <div class="num">02</div>
+  <h2>System</h2>
   <figure>
     <div class="scroll">
-    <svg class="flow" viewBox="0 0 960 400" role="img" aria-label="系统结构：CAD、当前状态和指令进入刚体仿真器；仿真器内的控制器公式、碰撞检测和积分写死；碰撞检测报出的接触点进入一个小网络，网络在每个接触点上输出受约束的修正力，汇成六维修正，一路加回仿真器推动运动，一路加到仿真接触力上得到力传感器预测；输出的下一步状态和力交给下游 MPC 或策略">
+    <svg class="flow" viewBox="0 0 820 300" role="img" aria-label="System: CAD, state and command enter a rigid-body simulator; the simulator's contact points go to a small network that outputs a constrained correction wrench; the correction is fed back into the simulator, giving the next state and the force/torque prediction, which feed a downstream controller">
       <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker><marker id="ad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>
-      <!-- inputs -->
-      <rect class="box data" x="20" y="40" width="140" height="46" rx="6"/><text class="t b" x="90" y="60" text-anchor="middle">零件 CAD</text><text class="t s" x="90" y="76" text-anchor="middle">pin / axle / 孔，凸块网格</text>
-      <rect class="box data" x="20" y="110" width="140" height="46" rx="6"/><text class="t b" x="90" y="130" text-anchor="middle">当前位姿 + 速度</text>
-      <rect class="box data" x="20" y="180" width="140" height="46" rx="6"/><text class="t b" x="90" y="200" text-anchor="middle">指令（力 / 位置）</text><text class="t s" x="90" y="216" text-anchor="middle">来自控制器 / 策略</text>
-      <!-- sim -->
-      <rect class="box sim" x="220" y="20" width="230" height="230" rx="8"/><text class="t b" x="335" y="42" text-anchor="middle">刚体仿真器（写死）</text>
-      <rect class="box sim" x="235" y="55" width="200" height="46" rx="5"/><text class="t" x="335" y="73" text-anchor="middle">机器人 / 控制器模型</text><text class="t s" x="335" y="89" text-anchor="middle">导纳公式，几个参数辨识</text>
-      <rect class="box sim" x="235" y="111" width="200" height="60" rx="5"/><text class="t" x="335" y="129" text-anchor="middle">碰撞检测（带余量）</text><text class="t s" x="335" y="145" text-anchor="middle">→ 接触点位置、法向、距离、</text><text class="t s" x="335" y="159" text-anchor="middle">仿真器自己算的接触力 λ</text>
-      <rect class="box sim" x="235" y="181" width="200" height="56" rx="5"/><text class="t" x="335" y="199" text-anchor="middle">约束求解 + 积分</text><text class="t s" x="335" y="215" text-anchor="middle">不穿透、刚体、摩擦</text><text class="t s" x="335" y="229" text-anchor="middle">在这里保证</text>
-      <!-- net -->
-      <rect class="box learn" x="510" y="20" width="230" height="230" rx="8"/><text class="t b" x="625" y="42" text-anchor="middle">接触修正网络（学，小）</text>
-      <rect class="box learn" x="525" y="55" width="200" height="56" rx="5"/><text class="t" x="625" y="73" text-anchor="middle">每个接触点：局部特征</text><text class="t s" x="625" y="89" text-anchor="middle">在接触点坐标系里：距离、速度、指令、λ、</text><text class="t s" x="625" y="103" text-anchor="middle">力臂、两块局部几何（SDF）</text>
-      <rect class="box learn" x="525" y="121" width="200" height="44" rx="5"/><text class="t" x="625" y="139" text-anchor="middle">共享 MLP + 1 层注意力</text><text class="t s" x="625" y="155" text-anchor="middle">所有接触点同一套权重；互相看一眼</text>
-      <rect class="box learn" x="525" y="175" width="200" height="62" rx="5"/><text class="t" x="625" y="193" text-anchor="middle">每点修正力，受约束</text><text class="t s" x="625" y="209" text-anchor="middle">法向 ≥ 0，切向在摩擦锥内</text><text class="t s" x="625" y="223" text-anchor="middle">Σ f，Σ r × f → 6 维修正 ΔW</text>
-      <!-- outputs -->
-      <rect class="box" x="800" y="60" width="140" height="40" rx="6"/><text class="t b" x="870" y="84" text-anchor="middle">下一步位姿 / 速度</text>
-      <rect class="box" x="800" y="150" width="140" height="40" rx="6"/><text class="t b" x="870" y="174" text-anchor="middle">F/T 预测 = λ + ΔW</text>
-      <rect class="box dim" x="800" y="260" width="140" height="46" rx="6"/><text class="t b" x="870" y="280" text-anchor="middle">下游：MPC / 策略</text><text class="t s" x="870" y="296" text-anchor="middle">多步推演，选指令</text>
-      <!-- edges -->
-      <path class="e" d="M160 63 H220" marker-end="url(#a)"/>
-      <path class="e" d="M160 133 H220" marker-end="url(#a)"/>
-      <path class="e" d="M160 203 H220" marker-end="url(#a)"/>
-      <path class="e" d="M435 141 H525" marker-end="url(#a)"/><text class="el" x="445" y="135">接触点 + λ</text>
-      <path class="e hi" d="M625 237 V270 H335 V237" marker-end="url(#ah)"/><text class="el hi" x="380" y="288">ΔW 作为外力加回仿真器，由它决定引起多少运动</text>
-      <path class="e" d="M450 80 H800" marker-end="url(#a)"/>
-      <path class="e" d="M725 205 H770 V170 H800" marker-end="url(#a)"/>
-      <path class="e dim" d="M870 190 V260" marker-end="url(#ad)"/>
-      <path class="e dim" d="M800 283 H90 V226" marker-end="url(#ad)"/><text class="el" x="100" y="300">下一条指令（闭环）</text>
-      <!-- training -->
-      <rect class="box data" x="220" y="325" width="520" height="56" rx="6"/><text class="t b" x="480" y="345" text-anchor="middle">训练信号：真实位姿序列 + 力传感器读数，单步监督 + 在模型自己走到的状态上再纠正</text><text class="t s" x="480" y="365" text-anchor="middle">不需要可微仿真：预先算好"ΔW 变一点，下一步变多少"的线性表，训练只做矩阵乘法</text>
+      <rect class="box data" x="20" y="40" width="130" height="40" rx="6"/><text class="t b" x="85" y="65" text-anchor="middle">Part CAD</text>
+      <rect class="box data" x="20" y="100" width="130" height="40" rx="6"/><text class="t b" x="85" y="125" text-anchor="middle">State (pose, velocity)</text>
+      <rect class="box data" x="20" y="160" width="130" height="40" rx="6"/><text class="t b" x="85" y="185" text-anchor="middle">Command</text>
+
+      <rect class="box sim" x="210" y="30" width="190" height="180" rx="8"/><text class="t b" x="305" y="55" text-anchor="middle">Rigid-body simulator</text>
+      <text class="t s" x="305" y="85" text-anchor="middle">robot / controller model</text>
+      <text class="t s" x="305" y="110" text-anchor="middle">collision detection</text>
+      <text class="t s" x="305" y="125" text-anchor="middle">→ contact points, normals, forces</text>
+      <text class="t s" x="305" y="155" text-anchor="middle">constraints + integration</text>
+      <text class="t s" x="305" y="170" text-anchor="middle">(no penetration, rigid body)</text>
+
+      <rect class="box learn" x="460" y="30" width="190" height="180" rx="8"/><text class="t b" x="555" y="55" text-anchor="middle">Contact correction net</text>
+      <text class="t s" x="555" y="85" text-anchor="middle">per contact point:</text>
+      <text class="t s" x="555" y="100" text-anchor="middle">local geometry + kinematics</text>
+      <text class="t s" x="555" y="130" text-anchor="middle">small shared network</text>
+      <text class="t s" x="555" y="160" text-anchor="middle">correction force per contact,</text>
+      <text class="t s" x="555" y="175" text-anchor="middle">physically constrained → ΔW</text>
+
+      <rect class="box" x="700" y="60" width="100" height="40" rx="6"/><text class="t b" x="750" y="85" text-anchor="middle">Next state</text>
+      <rect class="box" x="700" y="130" width="100" height="40" rx="6"/><text class="t b" x="750" y="155" text-anchor="middle">F/T prediction</text>
+      <rect class="box dim" x="700" y="230" width="100" height="40" rx="6"/><text class="t b" x="750" y="255" text-anchor="middle">MPC / policy</text>
+
+      <path class="e" d="M150 60 H210" marker-end="url(#a)"/>
+      <path class="e" d="M150 120 H210" marker-end="url(#a)"/>
+      <path class="e" d="M150 180 H210" marker-end="url(#a)"/>
+      <path class="e" d="M400 120 H460" marker-end="url(#a)"/><text class="el" x="403" y="112">contacts</text>
+      <path class="e hi" d="M555 210 V240 H305 V210" marker-end="url(#ah)"/><text class="el hi" x="330" y="258">ΔW applied as a force inside the simulator</text>
+      <path class="e" d="M400 80 H700" marker-end="url(#a)"/>
+      <path class="e" d="M650 150 H700" marker-end="url(#a)"/>
+      <path class="e dim" d="M750 170 V230" marker-end="url(#ad)"/>
+      <path class="e dim" d="M700 250 H85 V200" marker-end="url(#ad)"/><text class="el" x="95" y="268">next command</text>
     </svg>
     </div>
-    <figcaption>核心是红色那条边：网络不直接改位姿，它输出一个力，交给仿真器去积分。这一条决定了三件事——运动和力读数来自同一个量（不会"力很大但没动"），修正永远不会让零件穿过孔，网络初始化为零时系统就是纯仿真器。</figcaption>
+    <figcaption>The red edge is the point of the design: the network does not edit the pose, it outputs a force that the simulator integrates. One correction therefore drives both the motion and the force reading, and the result can never penetrate the part.</figcaption>
   </figure>
 </section>
 
-<!-- ============================================================ 3 CHOICES -->
 <section>
-  <div><span class="num">03</span></div>
-  <h2>六个设计选择</h2>
-  <p>任何一个接触动力学模型都要回答这六个问题。每一行是一个问题，从左（全靠物理）到右（全靠学）是可选项；实心绿点是我的选择，空心蓝圈是 Act-FIGNet（目前这个数据集上最准的纯学习模型），灰点是 MuJoCo + 辨识。</p>
+  <div class="num">03</div>
+  <h2>Design space</h2>
+  <p>Every contact-dynamics model answers the same six questions. Each row is one question, from all-physics on the left to all-learned on the right. The green dots are the starting combination; we will vary rows against each other and report which combinations matter.</p>
   <figure>
     <div class="scroll">
-    <svg class="choices" viewBox="0 0 900 470" role="img" aria-label="六个设计部件各一条从物理到学习的轴：几何表示、接触结构、物理先验、学习单元、力-运动耦合、训练信号；我们的选择集中在偏物理一侧但学习单元为接触点，Act-FIGNet 的选择集中在偏学习一侧且学习单元为顶点，MuJoCo 全在最左">
+    <svg class="choices" viewBox="0 0 860 430" role="img" aria-label="Six design axes from physics to learned: geometry representation, contact structure, physics prior, learning unit, force-motion coupling, training signal. The starting combination sits left of center on five axes and at per-contact on the learning-unit axis; the fully learned reference sits right on all six; the plain simulator sits far left on all six">
       <defs><marker id="c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--line)"/></marker></defs>
-      <text class="lab m" x="230" y="22">全靠物理 / 写死</text><text class="lab m" x="820" y="22" text-anchor="end">全靠学</text>
-      <!-- legend -->
-      <circle class="ours" cx="240" cy="452" r="6"/><text class="lab" x="252" y="456">我的选择</text>
-      <circle class="theirs" cx="340" cy="452" r="6"/><text class="lab" x="352" y="456">Act-FIGNet</text>
-      <circle class="mj" cx="450" cy="452" r="5"/><text class="lab" x="462" y="456">MuJoCo + 辨识</text>
+      <text class="lab m" x="250" y="22">all physics</text><text class="lab m" x="810" y="22" text-anchor="end">all learned</text>
+      <circle class="cand" cx="250" cy="412" r="6"/><text class="lab" x="262" y="416">starting combination</text>
+      <circle class="ref" cx="420" cy="412" r="6"/><text class="lab" x="432" y="416">fully learned reference (Act-FIGNet)</text>
+      <circle class="mj" cx="660" cy="412" r="5"/><text class="lab" x="672" y="416">plain simulator</text>
 
-      <!-- row template: y; axis from x=230 to 820; ticks at 230, 377, 525, 672, 820 -->
-      <!-- ① geometry -->
-      <text class="lab h" x="20" y="64">① 几何表示</text><text class="lab m" x="20" y="80">零件用什么描述</text>
-      <line class="axis" x1="230" y1="60" x2="820" y2="60" marker-end="url(#c)"/>
-      <text class="lab m" x="230" y="48" text-anchor="middle">解析参数</text><text class="lab m" x="377" y="48" text-anchor="middle">凸网格</text><text class="lab m" x="525" y="48" text-anchor="middle">网格 + 局部 SDF</text><text class="lab m" x="672" y="48" text-anchor="middle">整张网格进图</text><text class="lab m" x="820" y="48" text-anchor="middle">学出来的 SDF</text>
-      <circle class="mj" cx="377" cy="60" r="5"/><circle class="theirs" cx="672" cy="60" r="7"/><circle class="ours" cx="525" cy="60" r="7"/>
-      <text class="lab m" x="525" y="80" text-anchor="middle">CAD 直接进仿真器；网络只看接触点附近 3×3×3</text>
+      <text class="lab h" x="20" y="62">Geometry</text>
+      <line class="axis" x1="250" y1="58" x2="810" y2="58" marker-end="url(#c)"/>
+      <text class="lab m" x="250" y="46" text-anchor="middle">parameters</text><text class="lab m" x="390" y="46" text-anchor="middle">mesh</text><text class="lab m" x="530" y="46" text-anchor="middle">mesh + local SDF</text><text class="lab m" x="670" y="46" text-anchor="middle">full mesh graph</text><text class="lab m" x="810" y="46" text-anchor="middle">learned SDF</text>
+      <circle class="mj" cx="390" cy="58" r="5"/><circle class="ref" cx="670" cy="58" r="7"/><circle class="cand" cx="530" cy="58" r="7"/>
 
-      <!-- ② contact structure -->
-      <text class="lab h" x="20" y="134">② 接触结构</text><text class="lab m" x="20" y="150">谁和谁在接触、在哪</text>
-      <line class="axis" x1="230" y1="130" x2="820" y2="130" marker-end="url(#c)"/>
-      <text class="lab m" x="230" y="118" text-anchor="middle">求解器接触点</text><text class="lab m" x="425" y="118" text-anchor="middle">求解器 + 余量</text><text class="lab m" x="620" y="118" text-anchor="middle">距离阈值连边</text><text class="lab m" x="820" y="118" text-anchor="middle">隐式（不表示）</text>
-      <circle class="mj" cx="230" cy="130" r="5"/><circle class="theirs" cx="620" cy="130" r="7"/><circle class="ours" cx="425" cy="130" r="7"/>
-      <text class="lab m" x="425" y="150" text-anchor="middle">仿真器找接触，向外扩 3 mm 让网络提前看到"快碰了"</text>
+      <text class="lab h" x="20" y="126">Contact structure</text>
+      <line class="axis" x1="250" y1="122" x2="810" y2="122" marker-end="url(#c)"/>
+      <text class="lab m" x="250" y="110" text-anchor="middle">solver contacts</text><text class="lab m" x="437" y="110" text-anchor="middle">solver + margin</text><text class="lab m" x="623" y="110" text-anchor="middle">learned collision edges</text><text class="lab m" x="810" y="110" text-anchor="middle">implicit</text>
+      <circle class="mj" cx="250" cy="122" r="5"/><circle class="ref" cx="623" cy="122" r="7"/><circle class="cand" cx="437" cy="122" r="7"/>
 
-      <!-- ③ physics prior -->
-      <text class="lab h" x="20" y="204">③ 物理先验</text><text class="lab m" x="20" y="220">哪些定律写死</text>
-      <line class="axis" x1="230" y1="200" x2="820" y2="200" marker-end="url(#c)"/>
-      <text class="lab m" x="230" y="188" text-anchor="middle">全部（仿真器）</text><text class="lab m" x="400" y="188" text-anchor="middle">仿真器 + 约束修正</text><text class="lab m" x="580" y="188" text-anchor="middle">只留刚体 / 等变</text><text class="lab m" x="820" y="188" text-anchor="middle">无</text>
-      <circle class="mj" cx="230" cy="200" r="5"/><circle class="theirs" cx="640" cy="200" r="7"/><circle class="ours" cx="400" cy="200" r="7"/>
-      <text class="lab m" x="400" y="220" text-anchor="middle">仿真器全留；修正力只推不拉、在摩擦锥内、经力臂合成</text>
+      <text class="lab h" x="20" y="190">Physics prior</text>
+      <line class="axis" x1="250" y1="186" x2="810" y2="186" marker-end="url(#c)"/>
+      <text class="lab m" x="250" y="174" text-anchor="middle">full simulator</text><text class="lab m" x="437" y="174" text-anchor="middle">simulator + constrained residual</text><text class="lab m" x="640" y="174" text-anchor="middle">rigid body / equivariance only</text><text class="lab m" x="810" y="174" text-anchor="middle">none</text>
+      <circle class="mj" cx="250" cy="186" r="5"/><circle class="ref" cx="640" cy="186" r="7"/><circle class="cand" cx="437" cy="186" r="7"/>
 
-      <!-- ④ learning unit -->
-      <text class="lab h" x="20" y="274">④ 学习单元</text><text class="lab m" x="20" y="290">网络管多细的东西</text>
-      <line class="axis" x1="230" y1="270" x2="820" y2="270" marker-end="url(#c)"/>
-      <text class="lab m" x="230" y="258" text-anchor="middle">几个参数</text><text class="lab m" x="377" y="258" text-anchor="middle">整体修正</text><text class="lab m" x="525" y="258" text-anchor="middle">每个接触点</text><text class="lab m" x="672" y="258" text-anchor="middle">每个顶点</text><text class="lab m" x="820" y="258" text-anchor="middle">每个粒子</text>
-      <circle class="mj" cx="230" cy="270" r="5"/><circle class="theirs" cx="672" cy="270" r="7"/><circle class="ours" cx="525" cy="270" r="7"/>
-      <text class="lab m" x="525" y="290" text-anchor="middle">≤10 个点，每步 3 ms CPU；局部所以跨几何；不学"刚体一起动"</text>
+      <text class="lab h" x="20" y="254">Learning unit</text>
+      <line class="axis" x1="250" y1="250" x2="810" y2="250" marker-end="url(#c)"/>
+      <text class="lab m" x="250" y="238" text-anchor="middle">few parameters</text><text class="lab m" x="390" y="238" text-anchor="middle">global</text><text class="lab m" x="530" y="238" text-anchor="middle">per contact</text><text class="lab m" x="670" y="238" text-anchor="middle">per vertex</text><text class="lab m" x="810" y="238" text-anchor="middle">per particle</text>
+      <circle class="mj" cx="250" cy="250" r="5"/><circle class="ref" cx="670" cy="250" r="7"/><circle class="cand" cx="530" cy="250" r="7"/>
 
-      <!-- ⑤ coupling -->
-      <text class="lab h" x="20" y="344">⑤ 力-运动耦合</text><text class="lab m" x="20" y="360">力读数和运动是不是一个量</text>
-      <line class="axis" x1="230" y1="340" x2="820" y2="340" marker-end="url(#c)"/>
-      <text class="lab m" x="230" y="328" text-anchor="middle">天然（仿真器）</text><text class="lab m" x="430" y="328" text-anchor="middle">同一 ΔW 进仿真器和读数</text><text class="lab m" x="650" y="328" text-anchor="middle">力臂合成，运动另算</text><text class="lab m" x="820" y="328" text-anchor="middle">分别回归</text>
-      <circle class="mj" cx="230" cy="340" r="5"/><circle class="theirs" cx="650" cy="340" r="7"/><circle class="ours" cx="430" cy="340" r="7"/>
-      <text class="lab m" x="430" y="360" text-anchor="middle">红色那条边：一个修正量同时决定运动和力</text>
+      <text class="lab h" x="20" y="318">Force–motion coupling</text>
+      <line class="axis" x1="250" y1="314" x2="810" y2="314" marker-end="url(#c)"/>
+      <text class="lab m" x="250" y="302" text-anchor="middle">native</text><text class="lab m" x="437" y="302" text-anchor="middle">one wrench, both outputs</text><text class="lab m" x="640" y="302" text-anchor="middle">lever-arm sum, motion separate</text><text class="lab m" x="810" y="302" text-anchor="middle">separate heads</text>
+      <circle class="mj" cx="250" cy="314" r="5"/><circle class="ref" cx="640" cy="314" r="7"/><circle class="cand" cx="437" cy="314" r="7"/>
 
-      <!-- ⑥ training signal -->
-      <text class="lab h" x="20" y="414">⑥ 训练信号</text><text class="lab m" x="20" y="430">用什么数据、怎么训</text>
-      <line class="axis" x1="230" y1="410" x2="820" y2="410" marker-end="url(#c)"/>
-      <text class="lab m" x="230" y="398" text-anchor="middle">参数拟合</text><text class="lab m" x="440" y="398" text-anchor="middle">单步 + 自己状态上纠正</text><text class="lab m" x="640" y="398" text-anchor="middle">单步 + 噪声注入</text><text class="lab m" x="820" y="398" text-anchor="middle">多步 / 预训练</text>
-      <circle class="mj" cx="230" cy="410" r="5"/><circle class="theirs" cx="640" cy="410" r="7"/><circle class="ours" cx="440" cy="410" r="7"/>
-      <text class="lab m" x="440" y="430" text-anchor="middle">真实位姿 + F/T；线性化避开可微仿真；DAgger 对付误差累积</text>
+      <text class="lab h" x="20" y="382">Training signal</text>
+      <line class="axis" x1="250" y1="378" x2="810" y2="378" marker-end="url(#c)"/>
+      <text class="lab m" x="250" y="366" text-anchor="middle">parameter fit</text><text class="lab m" x="450" y="366" text-anchor="middle">one-step + on-policy</text><text class="lab m" x="640" y="366" text-anchor="middle">one-step + noise</text><text class="lab m" x="810" y="366" text-anchor="middle">multi-step / pretraining</text>
+      <circle class="mj" cx="250" cy="378" r="5"/><circle class="ref" cx="640" cy="378" r="7"/><circle class="cand" cx="450" cy="378" r="7"/>
     </svg>
     </div>
-    <figcaption>看列的形状：Act-FIGNet 六行都在右边，MuJoCo 六行都在最左，我的选择是"五行偏左、④ 往右走一格到接触点"。这一格是整个提案的赌注——它是"够局部所以泛化、够少所以快"和"能修正仿真器错误所以准"的交点。</figcaption>
+    <figcaption>Read the columns as shapes: the fully learned reference sits on the right of every row, the plain simulator on the far left, and the starting combination keeps five rows near the simulator and moves only the learning unit to per-contact. That one move is the bet: local enough to generalize, few enough units to be fast, expressive enough to fix the simulator's contact model.</figcaption>
   </figure>
 </section>
 
-<!-- ============================================================ 4 EXPLAIN -->
 <section>
-  <div><span class="num">04</span></div>
-  <h2>每个选择的理由</h2>
-  <div class="cards">
-    <div class="card"><h3>① 几何：CAD 进仿真器，网络只看局部</h3><p>零件的整体形状由仿真器处理（它本来就会）；网络只看接触点附近一小块（3×3×3 网格上的有符号距离），描述"这里是平面、棱还是角"。</p><p class="why">为什么：跨几何泛化。一个新零件的局部特征（棱、圆角、平面）在旧零件上都见过；整张网格进图则每个新形状都是新输入。</p></div>
-    <div class="card"><h3>② 接触：仿真器找，带余量</h3><p>接触点由碰撞检测给出，不是学的。向外扩 3 mm，在快碰上时就报告接触点但不出力。</p><p class="why">为什么：不会漏接触也不会凭空造接触。全局残差发散就是因为它可以在没接触的地方加力。余量让网络能提前处理接触事件。</p></div>
-    <div class="card"><h3>③ 物理先验：仿真器全留，修正受约束</h3><p>不穿透、刚体、导纳控制器都在仿真器里。网络输出的修正力必须：法向只推不拉，切向不超过摩擦锥。</p><p class="why">为什么：少数据、不发散。写死的部分不需要数据去学；约束保证网络再怎么错也不会输出物理上不可能的力。</p></div>
-    <div class="card"><h3>④ 学习单元：每个接触点</h3><p>≤10 个接触点用同一个小 MLP（4 万参数），加一层注意力让它们互相看一眼。</p><p class="why">为什么：快 + 泛化。单元少所以每步 3 ms CPU；每个点的规律与零件整体无关所以可迁移；"一个点被顶住整个零件减速"这件事交给仿真器，不用网络靠传消息学。</p></div>
-    <div class="card"><h3>⑤ 耦合：同一个修正量走两条路</h3><p>网络输出的 ΔW 一路作为外力加回仿真器（决定运动），一路加到仿真接触力上（决定力读数）。</p><p class="why">为什么：物理上力和运动本来就是一个量。分开回归的模型可以"力很大但没动"，单步力指标会很好看但推演发散。</p></div>
-    <div class="card"><h3>⑥ 训练：真实数据，不需要可微仿真</h3><p>预先对每个样本算"ΔW 变一点，下一步位姿和力变多少"（有限差分），训练只做矩阵乘法。再让模型自己推演，在它走偏的状态上重新纠正（DAgger）。</p><p class="why">为什么：仿真器可以随便换（MuJoCo、Drake、自研），不要求可导；DAgger 直接对付"训练看真实状态、推演看自己状态"的错配。</p></div>
-  </div>
-</section>
-
-<!-- ============================================================ 5 NEXT -->
-<section>
-  <div><span class="num">05</span></div>
-  <h2>这个结构要验证什么</h2>
-  <div class="tbl"><table>
-    <tr><th>对应</th><th>实验</th><th>如果成立说明什么</th><th>如果不成立说明什么</th></tr>
-    <tr><td>RQ1</td><td>同一仿真器、同一数据：按接触点修正 vs 整体修正 vs 从零学</td><td>结构比容量重要；约束是必要的</td><td>接触点粒度不够，要往顶点方向走</td></tr>
-    <tr><td>RQ2</td><td>接触参数不辨识（默认值）+ 网络，vs 辨识过 + 网络</td><td>网络能替代大部分标定，只剩控制器几个数</td><td>标定省不掉，要么把参数也变成网络输出</td></tr>
-    <tr><td>RQ3</td><td>按零件留出：训练 N 种零件，测没见过的</td><td>局部几何特征足够；可以直接上 Technic 零件库</td><td>局部块太小，要扩大感受野或换几何表示</td></tr>
-    <tr><td>速度</td><td>每步耗时 vs 纯学习模型，CPU</td><td>能进 MPC 的循环</td><td>接触点数或特征计算要精简</td></tr>
-  </table></div>
-  <p class="note">数据：先用公开的力控插入数据集（UR10e + 六维力传感器，圆柱 / 六边形 / 方形三种工具）搭通流程和跑消融，因为它有 Act-FIGNet 作为纯学习的参照。之后换成 Technic 零件：先仿真生成多种零件的数据，再采少量真实 F/T 校准。</p>
+  <div class="num">04</div>
+  <h2>Plan</h2>
+  <ul class="plain">
+    <li><b>Now:</b> build on the public force-controlled insertion dataset (UR10e + 6-axis F/T; cylinder, hexagon, square tools), which has Act-FIGNet as a fully learned reference.</li>
+    <li><b>Next week:</b> vary the six axes against each other — per-contact vs. global vs. from scratch; with vs. without simulator calibration; with vs. without local geometry — and report which combinations move accuracy, speed and generalization.</li>
+    <li><b>Then:</b> move to Technic parts: simulate many part types from LDraw geometry, collect a small set of real F/T runs for calibration, test on held-out part types.</li>
+  </ul>
 </section>
 </div>
