@@ -30,7 +30,7 @@ def evaluate(c):
                 force=float(np.sqrt(((Wp[:, :3] - O[:, :3]) ** 2).mean(0)).mean()))
 
 if __name__ == "__main__":
-    cands = [{"inflate_cylinder": a, "dz": z} for a in (0.0, 1.5e-4, 3e-4, 4.5e-4) for z in (0.0, 1.5e-4, 3e-4, 4.5e-4)]
+    cands = [{"inflate_cylinder": a, "dz": z} for a in (0.0, 4.5e-4, 6e-4, 8e-4, 1.0e-3) for z in (0.0, 4.5e-4, 6e-4, 8e-4, 1.0e-3)]
     with Pool(4) as pool:
         res = pool.map(evaluate, cands)
     b = res[0]
@@ -40,6 +40,6 @@ if __name__ == "__main__":
     for r in res[:6]:
         print({k: round(v, 5) for k, v in r.items()})
     print("DEFAULT", {k: round(v, 4) for k, v in b.items()})
-    json.dump({"best": res[0], "default": b, "all": res}, open("results/sysid4.json", "w"), indent=1)
-    json.dump(dict(BASE, **{k: res[0][k] for k in ("inflate_cylinder", "dz")}), open("results/simparams_sysid4.json", "w"), indent=1)
+    json.dump({"best": res[0], "default": b, "all": res}, open("results/sysid4_ext.json", "w"), indent=1)
+    json.dump(dict(BASE, **{k: res[0][k] for k in ("inflate_cylinder", "dz")}), open("results/simparams_sysid4_ext.json", "w"), indent=1)
     print("SYSID4_DONE")
