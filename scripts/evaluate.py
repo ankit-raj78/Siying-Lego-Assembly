@@ -57,9 +57,13 @@ def make_residual(model, ref):
 def make_skin_residual(model, geo):
     def f(sim, a, v, w):
         p, q = sim.pose()
-        ft = geo.features(p, q, v, w, a)
-        b = {k: torch.from_numpy(np.asarray(ft[k])[None]) for k in ["feats", "mask", "r", "g", "glob"]}
-        b["W0"] = torch.from_numpy(sim.contact_wrench()[None].astype(np.float32))   # after sim.forward(a)
+        sc = sim.features(a, v, w)                              # solver contacts (after sim.forward(a))
+        m = sc["mask"] > 0
+        cpos = (p + sc["r"][m]).astype(np.float64)
+        cforce = np.einsum("kij,ki->kj", sc["R"][m], sc["lam"][m]).astype(np.float64)   # rows of R are n,t1,t2
+        ft = geo.features(p, q, v, w, a, cpos, cforce, sc["R"][m][:, 0, :].astype(np.float64))
+        b = {k: torch.from_numpy(np.asarray(ft[k])[None]) for k in ["feats", "mask", "r", "g", "lam_skin", "glob"]}
+        b["W_inst"] = torch.from_numpy(sim.contact_wrench()[None].astype(np.float32))
         with torch.no_grad():
             return model(b)[0].numpy().astype(np.float64)
     return f

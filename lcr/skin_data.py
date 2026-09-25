@@ -69,7 +69,7 @@ class GeometryBundle:
         v, w = b["glob"][:, :3] * 5e-3, b["glob"][:, 3:6] * 0.05
         tool = b["tool"].long()
         geo = {"pts": self.pts[tool], "nrm": self.nrm[tool], "edge": self.edge[tool], "A": self.A, "b": self.b}
-        feats, mask, r_w, g_w = features_torch(geo, pos, R, v, w)
         f_w = torch.einsum("bkij,bki->bkj", b["R"], b["lam"]) * b["mask"][..., None]   # per-contact sim forces, world
         W_inst = torch.cat([f_w.sum(1), torch.cross(b["r"], f_w, dim=-1).sum(1)], -1)
-        return {"feats": feats, "mask": mask, "r": r_w, "g": g_w, "glob": b["glob"], "W0": W_inst}
+        feats, mask, r_w, g_w, lam_skin = features_torch(geo, pos, R, v, w, pos[:, None] + b["r"], f_w, b["R"][:, :, 0, :], b["mask"])
+        return {"feats": feats, "mask": mask, "r": r_w, "g": g_w, "lam_skin": lam_skin, "glob": b["glob"], "W_inst": W_inst}

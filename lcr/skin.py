@@ -19,7 +19,8 @@ K_POINTS = 384
 EDGE_STEP = 4e-3         # one edge sample per 4 mm of hull edge length
 TIP_FRACTION = 0.8       # share of points on the tool tip (the part that enters the socket)
 MARGIN = 3e-3
-N_SKIN_FEAT = 15
+N_SKIN_FEAT = 19
+ANCHOR_RADIUS = 1.0      # every solver contact is attached to its nearest skin point (radius effectively unlimited)
 N_ACTIVE = 64            # points kept per sample (closest to the environment); the rest carry no force
 
 
@@ -128,7 +129,7 @@ class SkinGeometry:
         n = np.arange(len(P))
         return s_piece[n, j], self.A[j, kstar[n, j]]
 
-    def features(self, pos, quat, v, w, cmd, margin=MARGIN):
+    def features(self, pos, quat, v, w, cmd, contact_pos=None, contact_force=None, contact_normal=None, margin=MARGIN):
         R = D.quat_to_mat(quat)
         Pw = pos + self.pts @ R.T
         sdf, g_w = self.sdf(Pw)
@@ -140,8 +141,24 @@ class SkinGeometry:
                             vel_b / 5e-3, self.edge[:, None] / 5e-3, (self.nrm * g_b).sum(1, keepdims=True)], 1)
         glob = np.concatenate([v / 5e-3, w / 0.05, cmd[:3] / 10.0, cmd[3:]]).astype(np.float32)
         keep = np.argsort(sdf)[:N_ACTIVE]                       # closest points only
-        return {"feats": f[keep].astype(np.float32), "mask": mask[keep], "r": r_w[keep].astype(np.float32),
-                "g": g_w[keep].astype(np.float32), "glob": glob}
+        f, mask, r_w, g_w = f[keep], mask[keep], r_w[keep], g_w[keep]
+        # anchor the base simulator's contact forces (world) on the nearest skin points
+        lam = np.zeros((len(keep), 3))
+        if contact_pos is not None and len(contact_pos):
+            d = np.linalg.norm(contact_pos[:, None, :] - (pos + r_w)[None], axis=-1)
+            j = np.zeros(len(contact_pos), int)
+            for c in range(len(contact_pos)):                                    # distinct nearest point per contact
+                j[c] = d[c].argmin(); d[:, j[c]] = np.inf
+            g_w = g_w.copy(); r_w = r_w.copy()
+            g_w[j] = contact_normal; r_w[j] = contact_pos - pos
+            t1, t2 = tangent_basis_np(g_w)
+            for c in range(len(contact_pos)):
+                fw = contact_force[c]
+                lam[j[c]] += [fw @ g_w[j[c]], fw @ t1[j[c]], fw @ t2[j[c]]]
+            mask = mask.copy(); mask[j] = 1.0                                    # anchored = active
+        f = np.concatenate([f, lam / 10.0, (np.abs(lam).sum(1, keepdims=True) > 0).astype(np.float64)], 1)
+        return {"feats": f.astype(np.float32), "mask": mask.astype(np.float32), "r": r_w.astype(np.float32),
+                "g": g_w.astype(np.float32), "lam_skin": lam.astype(np.float32), "glob": glob}
 
     # ------------------------------------------------------------ torch path (batched)
     def torch_tensors(self, device="cpu"):
@@ -149,14 +166,28 @@ class SkinGeometry:
         return {"pts": t(self.pts), "nrm": t(self.nrm), "edge": t(self.edge), "A": t(self.A), "b": t(self.b)}
 
 
+def tangent_basis_np(g):
+    e = np.where(np.abs(g[:, :1]) < 0.9, np.array([[1.0, 0, 0]]), np.array([[0, 1.0, 0]]))
+    t1 = np.cross(g, e); t1 /= np.linalg.norm(t1, axis=1, keepdims=True) + 1e-9
+    return t1, np.cross(g, t1)
+
+
+def tangent_basis(g):
+    e = torch.where(g[..., :1].abs() < 0.9, torch.tensor([1.0, 0, 0], device=g.device).expand_as(g),
+                    torch.tensor([0, 1.0, 0], device=g.device).expand_as(g))
+    t1 = torch.cross(g, e, dim=-1); t1 = t1 / (t1.norm(dim=-1, keepdim=True) + 1e-9)
+    return t1, torch.cross(g, t1, dim=-1)
+
+
 def mujoco_forward(sim):
     import mujoco
     mujoco.mj_forward(sim.m, sim.d)
 
 
-def features_torch(geo, pos, R, v, w, margin=MARGIN):
+def features_torch(geo, pos, R, v, w, contact_pos=None, contact_force=None, contact_normal=None, contact_mask=None, margin=MARGIN):
     """geo: dict of per-sample tensors (pts (B,K,3), nrm (B,K,3), edge (B,K)) and env (A (J,P,3), b (J,P)).
-    pos (B,3), R (B,3,3) body->world, v/w (B,3) world. Returns feats (B,K,15), mask, r_w, g_w."""
+    pos (B,3), R (B,3,3) body->world, v/w (B,3) world; solver contacts (B,Kc,3) positions/forces (world) + mask.
+    Returns feats (B,Ka,19), mask, r_w, g_w, lam_skin (anchored solver force in the point frame)."""
     pts, nrm, edge, A, b = geo["pts"], geo["nrm"], geo["edge"], geo["A"], geo["b"]
     Pw = pos[:, None] + torch.einsum("bij,bkj->bki", R, pts)                 # (B,K,3)
     s = torch.einsum("jpi,bki->bkjp", A, Pw) + b[None, None]                 # (B,K,J,P)
@@ -172,4 +203,30 @@ def features_torch(geo, pos, R, v, w, margin=MARGIN):
                    edge[..., None] / 5e-3, (nrm * g_b).sum(-1, keepdim=True)], -1)
     keep = torch.topk(-sdf, min(N_ACTIVE, sdf.shape[1]), dim=1).indices          # closest points only
     gather = lambda x: torch.gather(x, 1, keep[..., None].expand(-1, -1, x.shape[-1])) if x.dim() == 3 else torch.gather(x, 1, keep)
-    return gather(f), gather(mask), gather(r_w), gather(g_w)
+    f, mask, r_w, g_w = gather(f), gather(mask), gather(r_w), gather(g_w)
+    # anchor the base simulator's contact forces on the nearest skin points; those points adopt the
+    # contact's normal and position so the initial wrench equals the simulator's exactly
+    B, Ka = f.shape[:2]
+    lam = torch.zeros(B, Ka, 3, device=f.device)
+    if contact_pos is not None:
+        d = torch.cdist(contact_pos, pos[:, None] + r_w)                          # (B,Kc,Ka)
+        taken = torch.zeros(B, Ka, dtype=torch.bool, device=f.device)
+        js = []
+        for c in range(d.shape[1]):                                              # distinct nearest point per contact
+            dc = d[:, c].masked_fill(taken, float("inf"))
+            jc = dc.argmin(-1)
+            js.append(jc)
+            taken[torch.arange(B), jc] |= contact_mask[:, c] > 0
+        j = torch.stack(js, 1)
+        ok = (contact_mask > 0)[..., None]
+        j3 = j[..., None].expand(-1, -1, 3)
+        g_w = g_w.scatter(1, j3, torch.where(ok, contact_normal, torch.gather(g_w, 1, j3)))
+        r_w = r_w.scatter(1, j3, torch.where(ok, contact_pos - pos[:, None], torch.gather(r_w, 1, j3)))
+        t1, t2 = tangent_basis(g_w)
+        gj, t1j, t2j = (torch.gather(x, 1, j3) for x in (g_w, t1, t2))
+        fw = contact_force * ok
+        loc = torch.stack([(fw * gj).sum(-1), (fw * t1j).sum(-1), (fw * t2j).sum(-1)], -1)   # (B,Kc,3)
+        lam.scatter_add_(1, j3, loc)
+        mask = mask.scatter(1, j, torch.where(ok[..., 0], torch.ones_like(j, dtype=mask.dtype), torch.gather(mask, 1, j)))  # anchored = active
+    f = torch.cat([f, lam / 10.0, (lam.abs().sum(-1, keepdim=True) > 0).float()], -1)
+    return f, mask, r_w, g_w, lam
