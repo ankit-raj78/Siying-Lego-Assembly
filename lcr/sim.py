@@ -5,6 +5,8 @@ Physics per 0.1 s data step (quasi-static admittance, see design doc F1/F2):
     D * v = F_cmd + F_contact (+ dW, the learned residual)
 MuJoCo integrates this with implicit damping over 0.1 s / sub_dt substeps.
 """
+import json
+import os
 from dataclasses import dataclass, field
 
 import mujoco
@@ -37,6 +39,26 @@ class SimParams:
     extra: dict = field(default_factory=dict)
 
 
+def params_from_cfg(c):
+    """SimParams from a sysid2-style config (scales relative to the free-space fit)."""
+    base = SimParams()
+    sd, sm = c.get("damp_scale", 1.0), c.get("mass_scale", 1.0)
+    return SimParams(damping=tuple(np.array(base.damping) * np.array([sd, sd, sd, 1, 1, 1])),
+                     armature=tuple(np.array(base.armature) * np.array([sm, sm, sm, 1, 1, 1])),
+                     friction=c.get("friction", base.friction), solref_tc=c.get("tc", base.solref_tc),
+                     solref_dr=c.get("dr", base.solref_dr),
+                     solimp=(c.get("d0", base.solimp[0]),) + tuple(base.solimp[1:]))
+
+
+def default_params():
+    """Default base-sim parameters; LCR_SIMPARAMS=<json> selects another identified set."""
+    path = os.environ.get("LCR_SIMPARAMS")
+    if path:
+        with open(path) as f:
+            return params_from_cfg(json.load(f))
+    return SimParams()
+
+
 def _planes_for_geom(model, g):
     """Half-space form A x + b <= 0 (inside) of a convex geom, in the geom frame."""
     t = model.geom_type[g]
@@ -54,7 +76,8 @@ def _planes_for_geom(model, g):
 
 
 class AdmSim:
-    def __init__(self, split, params: SimParams = SimParams()):
+    def __init__(self, split, params: SimParams = None):
+        params = params or default_params()
         self.split = split
         self.p = params
         m = mujoco.MjModel.from_xml_path(D.model_path(split))

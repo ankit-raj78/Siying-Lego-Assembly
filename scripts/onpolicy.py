@@ -32,7 +32,7 @@ def _get(split):
     if split not in _CACHE:
         torch.set_num_threads(1)
         model, _, _ = load_model(ARGS["model"])
-        _CACHE[split] = (D.load_episodes(split), AdmSim(split, SimParams()), model)
+        _CACHE[split] = (D.load_episodes(split), AdmSim(split), model)
     return _CACHE[split]
 
 

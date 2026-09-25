@@ -36,7 +36,7 @@ _CACHE = {}
 def _get(split):
     """Per-worker cache of episodes and simulator (loading a 57 MB split per job is slow)."""
     if split not in _CACHE:
-        _CACHE[split] = (D.load_episodes(split), AdmSim(split, SimParams()))
+        _CACHE[split] = (D.load_episodes(split), AdmSim(split))
     return _CACHE[split]
 
 

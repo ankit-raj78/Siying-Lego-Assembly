@@ -76,7 +76,7 @@ def job(args):
     method, split, n_seg, stride1 = args
     torch.set_num_threads(1)
     eps = D.load_episodes(split)
-    sim = AdmSim(split, SimParams())
+    sim = AdmSim(split)
     ref = sim.socket_ref()
     rng = np.random.default_rng(12345)
     model = st = None
