@@ -1,0 +1,205 @@
+<title>两条流水线对照</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+SC:wght@700;900&display=swap">
+<style>
+:root{
+  --bg:#F2F4F2; --surface:#FFFFFF; --ink:#18201D; --muted:#56625D; --line:#CBD3CE; --band:#E6EBE8;
+  --accent:#C8372D; --sim:#2B5FA6; --simbg:#E6EEF9; --learn:#2D7A55; --learnbg:#E3F2E9; --data:#8A5A00; --databg:#FBF1DC;
+  --sans:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --serif:"Noto Serif SC","Songti SC",serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#111513; --surface:#191E1C; --ink:#E3E9E6; --muted:#9AA6A1; --line:#33403A; --band:#1E2522;
+    --accent:#F0685C; --sim:#86ADE9; --simbg:#1A2637; --learn:#6CC79A; --learnbg:#152D20; --data:#E0A94A; --databg:#33280F;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#111513; --surface:#191E1C; --ink:#E3E9E6; --muted:#9AA6A1; --line:#33403A; --band:#1E2522;
+  --accent:#F0685C; --sim:#86ADE9; --simbg:#1A2637; --learn:#6CC79A; --learnbg:#152D20; --data:#E0A94A; --databg:#33280F;
+}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.75;padding-inline:16px;padding-block:40px 80px}
+.wrap{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:48px}
+h1,h2,h3{font-family:var(--serif);text-wrap:balance;margin:0;line-height:1.3}
+h1{font-size:clamp(26px,5vw,36px);font-weight:900}
+h2{font-size:22px;font-weight:900}
+h3{font-size:17px;font-weight:700}
+p{margin:0;max-width:50em}
+code{font-family:var(--mono);font-size:.88em}
+.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+.note{color:var(--muted);font-size:14px}
+section{display:flex;flex-direction:column;gap:14px;border-top:1px solid var(--line);padding-top:22px}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:640px}
+th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:700;color:var(--muted);font-size:12px;background:var(--band);white-space:nowrap}
+tr:last-child td{border-bottom:none}
+figure{margin:0;display:flex;flex-direction:column;gap:10px}
+.scroll{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px}
+svg{display:block;max-width:100%;height:auto;font-family:var(--sans);color:var(--ink)}
+svg.flow{min-width:900px}
+figcaption{color:var(--muted);font-size:13.5px;max-width:56em}
+.box{fill:var(--surface);stroke:currentColor;stroke-width:1.2}
+.box.sim{fill:var(--simbg);stroke:var(--sim)}
+.box.learn{fill:var(--learnbg);stroke:var(--learn)}
+.box.data{fill:var(--databg);stroke:var(--data)}
+.t{fill:var(--ink);font-size:12px}
+.t.b{font-weight:700}
+.t.s{font-size:10.5px;fill:var(--muted)}
+.e{stroke:currentColor;stroke-width:1.3;fill:none}
+.e.hi{stroke:var(--accent);stroke-width:2}
+.el{fill:var(--muted);font-size:10.5px}
+.el.hi{fill:var(--accent);font-weight:700}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.sw{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:5px;border:1px solid}
+.sw.sim{background:var(--simbg);border-color:var(--sim)} .sw.learn{background:var(--learnbg);border-color:var(--learn)} .sw.data{background:var(--databg);border-color:var(--data)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.card h3{font-size:15px;font-family:var(--sans)}
+.card p{font-size:13.5px}
+ol.plain{margin:0;padding-left:1.25em;display:flex;flex-direction:column;gap:6px;max-width:52em}
+</style>
+
+<div class="wrap">
+<header style="display:flex;flex-direction:column;gap:12px">
+  <div class="eyebrow">补充说明</div>
+  <h1>Act-FIGNet 与 LCR：同样的输入输出，不同的中间过程</h1>
+  <p>两条流水线吃的是同一份数据、预测同样的两个量（下一步位姿、力传感器读数）。差别全在中间：Act-FIGNet 把物体拆成网格顶点，用图网络从零学接触；我们让 MuJoCo 先算一遍，网络只在它找到的几个接触点上修正。</p>
+  <div class="legend"><span><span class="sw data"></span>数据集里的东西</span><span><span class="sw sim"></span>写死的物理 / 仿真器</span><span><span class="sw learn"></span>网络学的部分</span></div>
+</header>
+
+<section>
+  <h2>1 数据集里有什么</h2>
+  <p>每条 episode 是机器人拿着一根工具（圆柱 / 六边形 / 方形）往插座里插，10 Hz 记录 500 步。每一步四样东西：</p>
+  <div class="tbl"><table>
+    <tr><th>字段</th><th>是什么</th><th>维度</th><th>我们怎么用</th><th>Act-FIGNet 怎么用</th></tr>
+    <tr><td><code>pos, quat</code></td><td>工具的位姿（相对插座）</td><td>3 + 4</td><td>当前步：喂给 MuJoCo 作为状态；下一步：运动的监督信号</td><td>当前及历史几步：图节点的位置特征；下一步：监督</td></tr>
+    <tr><td><code>action</code></td><td>策略下达的<b>指令力矩</b></td><td>6</td><td>喂给仿真器里的导纳控制器（写死的公式）</td><td>接到一个"力节点"上，网络自己学它怎么变成运动</td></tr>
+    <tr><td><code>wrench</code></td><td>力传感器<b>测到的</b>力矩</td><td>6</td><td>力预测的监督信号；也用来辨识控制器参数</td><td>力预测的监督信号</td></tr>
+    <tr><td><code>qpos</code></td><td>机器人关节角</td><td>6</td><td>没用（我们只建模工具，不建模手臂）</td><td>没用</td></tr>
+    <tr><td>网格文件</td><td>工具和插座的 CAD（凸块）</td><td>–</td><td>直接加载进 MuJoCo</td><td>顶点和面变成图的节点和边</td></tr>
+  </table></div>
+  <div class="tbl"><table>
+    <tr><th>数据划分</th><th>规模</th><th>用途</th></tr>
+    <tr><td>圆柱 + 六边形 train</td><td>800 条 × 500 步 = 40 万</td><td>训练</td></tr>
+    <tr><td>圆柱 + 六边形 val / test</td><td>1 万 / 2.5 万</td><td>选模型 / 报告"见过的工具"</td></tr>
+    <tr><td>方形 test</td><td>2.5 万</td><td>没见过的几何</td></tr>
+    <tr><td>expert / circle</td><td>各 1 万</td><td>没见过的策略（分布外动作）</td></tr>
+    <tr><td>sysid（有接触 / 无接触）</td><td>各 1 万</td><td>我们：辨识控制器的质量阻尼和接触参数。Act-FIGNet：辨识它的 MuJoCo baseline</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>2 Act-FIGNet 的流水线</h2>
+  <figure>
+    <div class="scroll">
+    <svg class="flow" viewBox="0 0 960 330" role="img" aria-label="Act-FIGNet 流程：网格顶点、位姿历史和指令力矩编码成图；面-面碰撞检测加碰撞边，力节点连到工具顶点；多轮消息传递后解码每个顶点的加速度并汇成刚体位姿，每个顶点的力用力臂汇成六维力矩；单步损失同时监督位姿和力">
+      <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+      <!-- inputs -->
+      <rect class="box data" x="20" y="30" width="150" height="46" rx="6"/><text class="t b" x="95" y="50" text-anchor="middle">工具 + 插座网格</text><text class="t s" x="95" y="66" text-anchor="middle">每个顶点 = 一个节点</text>
+      <rect class="box data" x="20" y="100" width="150" height="46" rx="6"/><text class="t b" x="95" y="120" text-anchor="middle">位姿历史</text><text class="t s" x="95" y="136" text-anchor="middle">最近几步的 pos, quat</text>
+      <rect class="box data" x="20" y="170" width="150" height="46" rx="6"/><text class="t b" x="95" y="190" text-anchor="middle">指令力矩 action</text><text class="t s" x="95" y="206" text-anchor="middle">接到一个"力节点"</text>
+      <!-- graph build -->
+      <rect class="box learn" x="230" y="30" width="170" height="60" rx="6"/><text class="t b" x="315" y="52" text-anchor="middle">建图</text><text class="t s" x="315" y="68" text-anchor="middle">网格内部边 + 面-面碰撞边</text><text class="t s" x="315" y="82" text-anchor="middle">（几何检测，半径内的面对）</text>
+      <rect class="box learn" x="230" y="120" width="170" height="60" rx="6"/><text class="t b" x="315" y="142" text-anchor="middle">编码器 MLP</text><text class="t s" x="315" y="158" text-anchor="middle">节点、边、力节点</text><text class="t s" x="315" y="172" text-anchor="middle">各自变成隐向量</text>
+      <!-- message passing -->
+      <rect class="box learn" x="460" y="60" width="170" height="90" rx="6"/><text class="t b" x="545" y="85" text-anchor="middle">消息传递 × N 轮</text><text class="t s" x="545" y="103" text-anchor="middle">顶点之间、碰撞面之间、</text><text class="t s" x="545" y="117" text-anchor="middle">力节点到工具顶点</text><text class="t s" x="545" y="135" text-anchor="middle">旋转等变；接触在这里被隐式学出</text>
+      <!-- decode -->
+      <rect class="box learn" x="690" y="30" width="170" height="60" rx="6"/><text class="t b" x="775" y="52" text-anchor="middle">解码：每顶点加速度</text><text class="t s" x="775" y="68" text-anchor="middle">最小二乘拟合成一个</text><text class="t s" x="775" y="82" text-anchor="middle">刚体位姿增量</text>
+      <rect class="box learn" x="690" y="120" width="170" height="60" rx="6"/><text class="t b" x="775" y="142" text-anchor="middle">解码：每顶点力</text><text class="t s" x="775" y="158" text-anchor="middle">Σ f，Σ r × f</text><text class="t s" x="775" y="172" text-anchor="middle">→ 6 维力矩</text>
+      <!-- outputs -->
+      <rect class="box" x="690" y="230" width="80" height="40" rx="6"/><text class="t b" x="730" y="254" text-anchor="middle">下一步位姿</text>
+      <rect class="box" x="780" y="230" width="80" height="40" rx="6"/><text class="t b" x="820" y="254" text-anchor="middle">F/T 读数</text>
+      <!-- edges -->
+      <path class="e" d="M170 53 H230" marker-end="url(#a1)"/>
+      <path class="e" d="M170 123 H230 V150" marker-end="url(#a1)"/><text class="el" x="180" y="118">顶点位置</text>
+      <path class="e" d="M170 193 H210 V150 H230" marker-end="url(#a1)"/>
+      <path class="e" d="M400 60 H430 V90 H460" marker-end="url(#a1)"/><text class="el" x="405" y="55">图结构</text>
+      <path class="e" d="M400 150 H430 V120 H460" marker-end="url(#a1)"/><text class="el" x="405" y="165">隐向量</text>
+      <path class="e" d="M630 90 H660 V60 H690" marker-end="url(#a1)"/>
+      <path class="e" d="M630 120 H660 V150 H690" marker-end="url(#a1)"/>
+      <path class="e" d="M730 90 V230" marker-end="url(#a1)"/>
+      <path class="e" d="M820 180 V230" marker-end="url(#a1)"/>
+      <!-- training -->
+      <rect class="box data" x="230" y="240" width="400" height="60" rx="6"/><text class="t b" x="430" y="262" text-anchor="middle">训练：单步损失 = |预测位姿 − 真实位姿| + |预测力 − 真实力|</text><text class="t s" x="430" y="282" text-anchor="middle">输入位姿加噪声，让模型习惯自己推演时的偏差；40 万步；GPU</text>
+      <path class="e" d="M690 250 H630" marker-end="url(#a1)"/>
+      <text class="t s" x="20" y="300">推理：每步 10.8 ms（GPU）。没有任何仿真器参与；控制器的响应、接触规律全在权重里。</text>
+    </svg>
+    </div>
+    <figcaption>Act-FIGNet 的全部中间过程都是学的（绿色）。它之所以能泛化到方形工具，是因为消息传递只在相邻顶点和相碰的面之间进行，是局部的；它之所以要 40 万步和 GPU，是因为每步要在几百个顶点上跑 N 轮消息传递，而且连"指令力矩怎么变成运动"这种本来有公式的事也得从数据里学。细节按论文第 III 节转述，节点特征和轮数以原文为准。</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>3 LCR 的流水线</h2>
+  <p><b>LCR = Local Contact Residual，局部接触残差。</b>三个词各对应一个设计决定：<b>Local</b>——网络只在接触点上工作，不看整体；<b>Contact</b>——接触点由 MuJoCo 找，不是学的；<b>Residual</b>——网络输出的是对仿真器接触力的修正量，仿真器算对的部分不动。</p>
+  <figure>
+    <div class="scroll">
+    <svg class="flow" viewBox="0 0 960 360" role="img" aria-label="LCR 流程：位姿、指令力矩和网格进入 MuJoCo；导纳控制器公式把指令变成驱动力；碰撞检测在 3 mm 余量内找出接触点及其法向和仿真接触力；每个接触点取 67 维局部特征进共享 MLP 和注意力；输出受物理约束的每点修正力，用力臂汇成六维修正力矩，一路加回 MuJoCo 推动运动，一路加到仿真接触力上得到 F/T 预测">
+      <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker><marker id="a2h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker></defs>
+      <!-- inputs -->
+      <rect class="box data" x="20" y="30" width="150" height="46" rx="6"/><text class="t b" x="95" y="50" text-anchor="middle">工具 + 插座网格</text><text class="t s" x="95" y="66" text-anchor="middle">直接加载</text>
+      <rect class="box data" x="20" y="100" width="150" height="46" rx="6"/><text class="t b" x="95" y="120" text-anchor="middle">当前位姿 + 速度</text><text class="t s" x="95" y="136" text-anchor="middle">速度由前后帧差分</text>
+      <rect class="box data" x="20" y="170" width="150" height="46" rx="6"/><text class="t b" x="95" y="190" text-anchor="middle">指令力矩 action</text>
+      <!-- MuJoCo block -->
+      <rect class="box sim" x="230" y="20" width="220" height="210" rx="8"/><text class="t b" x="340" y="42" text-anchor="middle">MuJoCo（写死）</text>
+      <rect class="box sim" x="245" y="55" width="190" height="44" rx="5"/><text class="t" x="340" y="73" text-anchor="middle">导纳控制器公式</text><text class="t s" x="340" y="89" text-anchor="middle">F = −0.93·a + D·v + M·v̇，M, D 辨识得到</text>
+      <rect class="box sim" x="245" y="110" width="190" height="52" rx="5"/><text class="t" x="340" y="128" text-anchor="middle">碰撞检测，余量 3 mm</text><text class="t s" x="340" y="143" text-anchor="middle">→ 接触点位置、法向、</text><text class="t s" x="340" y="156" text-anchor="middle">仿真器自己算的接触力 λ</text>
+      <rect class="box sim" x="245" y="172" width="190" height="44" rx="5"/><text class="t" x="340" y="190" text-anchor="middle">积分一步（0.1 s）</text><text class="t s" x="340" y="206" text-anchor="middle">不穿透约束在这里保证</text>
+      <!-- LCR block -->
+      <rect class="box learn" x="510" y="20" width="220" height="210" rx="8"/><text class="t b" x="620" y="42" text-anchor="middle">LCR 网络（学，4 万参数）</text>
+      <rect class="box learn" x="525" y="55" width="190" height="52" rx="5"/><text class="t" x="620" y="73" text-anchor="middle">每个接触点 67 维特征</text><text class="t s" x="620" y="88" text-anchor="middle">在接触点自己的坐标系里：距离、速度、</text><text class="t s" x="620" y="101" text-anchor="middle">指令、λ、力臂、两块 3×3×3 局部 SDF</text>
+      <rect class="box learn" x="525" y="117" width="190" height="40" rx="5"/><text class="t" x="620" y="134" text-anchor="middle">共享 MLP + 1 层注意力</text><text class="t s" x="620" y="149" text-anchor="middle">接触点之间互相看一眼</text>
+      <rect class="box learn" x="525" y="167" width="190" height="52" rx="5"/><text class="t" x="620" y="185" text-anchor="middle">每点修正力，受约束</text><text class="t s" x="620" y="200" text-anchor="middle">法向 ≥ 0（只推不拉），切向在摩擦锥内</text><text class="t s" x="620" y="213" text-anchor="middle">Σ f，Σ r × f → 6 维修正 ΔW</text>
+      <!-- outputs -->
+      <rect class="box" x="790" y="60" width="150" height="40" rx="6"/><text class="t b" x="865" y="84" text-anchor="middle">下一步位姿</text>
+      <rect class="box" x="790" y="150" width="150" height="40" rx="6"/><text class="t b" x="865" y="174" text-anchor="middle">F/T 读数 = λ 合力 + ΔW</text>
+      <!-- edges -->
+      <path class="e" d="M170 53 H230" marker-end="url(#a2)"/>
+      <path class="e" d="M170 123 H230" marker-end="url(#a2)"/>
+      <path class="e" d="M170 193 H230" marker-end="url(#a2)"/>
+      <path class="e" d="M435 136 H525" marker-end="url(#a2)"/><text class="el" x="445" y="130">接触点 + λ</text>
+      <path class="e hi" d="M620 219 V245 H340 V216" marker-end="url(#a2h)"/><text class="el hi" x="400" y="262">ΔW 作为外力加回仿真器，再积分</text>
+      <path class="e" d="M450 80 H770 V80 H790" marker-end="url(#a2)"/>
+      <path class="e" d="M715 193 H760 V170 H790" marker-end="url(#a2)"/>
+      <!-- training -->
+      <rect class="box data" x="230" y="285" width="500" height="55" rx="6"/><text class="t b" x="480" y="305" text-anchor="middle">训练：预先算好每个样本"ΔW 变一点，下一步位姿和 F/T 变多少"（6×6 的表）</text><text class="t s" x="480" y="325" text-anchor="middle">之后训练只做矩阵乘法，不用可微仿真；CPU 5–10 分钟；损失 = 位姿误差 + 5 × F/T 误差</text>
+      <text class="t s" x="20" y="345">推理：每步 3.0 ms（单核 CPU）。</text>
+    </svg>
+    </div>
+    <figcaption>红色那条边是整个设计的核心：网络的修正 ΔW 不是直接改位姿，而是作为一个外力加回 MuJoCo，由仿真器决定它引起多少运动。所以同一个 ΔW 同时决定了运动和力读数（力-运动耦合），而且永远不会让工具穿过插座。</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>4 逐项对照</h2>
+  <div class="tbl"><table>
+    <tr><th>环节</th><th>Act-FIGNet</th><th>LCR</th><th>后果</th></tr>
+    <tr><td>指令 → 运动（控制器）</td><td>学（力节点 → 顶点的消息）</td><td>公式 + 2 个辨识参数</td><td>换控制器：它重训，我们改两个数</td></tr>
+    <tr><td>找接触</td><td>学（碰撞边 + 消息传递）</td><td>MuJoCo 碰撞检测</td><td>我们不会漏接触也不会凭空造接触；但受限于网格精度</td></tr>
+    <tr><td>接触力大小</td><td>学</td><td>MuJoCo 算 λ，网络修正</td><td>我们初始化时就等于仿真器，训练只需学差值</td></tr>
+    <tr><td>物理约束</td><td>只有旋转等变</td><td>不穿透、法向 ≥ 0、摩擦锥</td><td>我们不会发散；它靠数据量压住</td></tr>
+    <tr><td>学习单元</td><td>几百个顶点</td><td>3–10 个接触点</td><td>3 ms CPU vs 10.8 ms GPU</td></tr>
+    <tr><td>几何信息</td><td>整张网格进图</td><td>接触点附近 3×3×3 的 SDF</td><td>都是局部 → 都能跨几何；我们的证据只有一个方形工具</td></tr>
+    <tr><td>训练</td><td>单步 + 噪声注入，40 万步</td><td>线性化单步 + DAgger</td><td>都在对付"训练看真实状态、推演看自己的状态"这个错配</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>5 DAgger 干了什么</h2>
+  <p>问题：训练时模型每一步的输入是<b>真实</b>位姿，输出跟真实下一步比。但推演时模型的输入是<b>自己上一步的预测</b>，已经偏了一点，模型从没在偏了的状态上被纠正过，于是误差越滚越大。100 步之后 4.7 mm 里有相当一部分是这么来的。</p>
+  <div class="cards">
+    <div class="card"><h3>Act-FIGNet 的办法</h3><p>训练时往输入位姿里加随机噪声，假装"我已经偏了一点"，让模型学会从偏的状态拉回来。简单，但噪声是随机的，不是模型真会犯的错。</p></div>
+    <div class="card"><h3>我们的办法：DAgger</h3><p>先训一版模型 → 让它在训练集上自己推演 → 记下它<b>实际走到的</b>偏掉的状态 → 在这些状态上重新算线性化表、用真实的下一步做监督 → 把这些样本加进训练集微调 8 轮。这样纠正的是模型真会犯的错，不是随机噪声。</p></div>
+  </div>
+  <ol class="plain">
+    <li>效果：第一轮 −14%（4.18 → 3.55 mm），第二轮只有 −2%，饱和。</li>
+    <li>副作用：推演用的是训练集里的随机策略动作，所以"模型会犯的错"只覆盖这种策略；专家策略上姿态误差反而从 1.22° 变成 1.62°。</li>
+    <li>名字来源：Dataset Aggregation，模仿学习里的老方法，把"在自己的状态分布上收集数据"这个思想搬到动力学模型上。</li>
+  </ol>
+</section>
+</div>
