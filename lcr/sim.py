@@ -103,6 +103,7 @@ class AdmSim:
             a = params.inflate.get(self.tool_type, 0.0) if "tool_tip" in m.geom(g).name else 0.0
             m.geom_margin[g] = params.margin + a      # force only when dist < a (surface inflated by a)
             m.geom_gap[g] = params.margin
+            m.geom_friction[g, 0] = params.friction   # MuJoCo uses the max over the geom pair
         dx, dy, dz, dyaw = params.socket_offset
         if any(params.socket_offset):
             socket = [g for g in self.env_geoms if m.geom(g).name.startswith("socket")]
