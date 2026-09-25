@@ -160,7 +160,7 @@ a{color:var(--accent)}
         <text class="axl" x="60" y="334" text-anchor="end">整体</text><text class="axl" x="60" y="234" text-anchor="end">接触点/对</text><text class="axl" x="60" y="134" text-anchor="end">顶点/表面点</text><text class="axl" x="60" y="50" text-anchor="end">粒子</text>
         <text class="axl" x="20" y="200" transform="rotate(-90 20 200)" text-anchor="middle">④ 学习单元粒度</text>
         <circle class="pt" cx="120" cy="330" r="7"/><text class="lb" x="132" y="326">MuJoCo + 辨识</text>
-        <circle class="pt" cx="190" cy="330" r="7"/><text class="lb" x="202" y="345">Ajay 2018 / 全局残差（失败格）</text>
+        <circle class="pt" cx="190" cy="330" r="7"/><text class="lb" x="202" y="345">Ajay 2018 / 全局残差（插入任务上发散）</text>
         <circle class="pt" cx="250" cy="330" r="7"/><text class="lb" x="262" y="318">Tracy 2023</text>
         <circle class="pt" cx="235" cy="300" r="7"/><text class="lb" x="247" y="296">Jiang 2022（整体冲量）</text>
         <circle class="pt" cx="330" cy="290" r="7"/><text class="lb" x="342" y="286">ContactNets（物体级）</text>
@@ -172,14 +172,14 @@ a{color:var(--accent)}
         <circle class="pt paper" cx="520" cy="130" r="7"/><text class="lb" x="440" y="112">Few-shot Neural Diff. Sim</text>
       </svg>
       </div>
-      <figcaption>左下"偏物理 + 整体修正"是已证明失败的格子；右上是纯学习的图仿真器，精度最高但要 GPU、无物理保证。"偏物理 + 接触点粒度"这个格子，在真实力传感器装配数据上之前是空的，我们占的就是它。</figcaption>
+      <figcaption>左下"偏物理 + 整体修正"：在这个插入任务上，论文的实现和我们的复现都比不加修正更差（Ajay 2018 在 2D 推动上是有效的，所以是任务相关，不是普遍失败）；右上是纯学习的图仿真器，精度最高但要 GPU、无物理保证。"偏物理 + 接触点粒度"这个格子，在真实力传感器装配数据上之前是空的，我们占的就是它。</figcaption>
     </figure>
   </section>
 
   <section>
-    <h3>1.4 已经证明走不通、或代价不值得的路</h3>
+    <h3>1.4 有证据表明走不通、或代价不值得的路</h3>
     <div class="cards">
-      <div class="card"><h4><span class="tag no">走不通</span> 全局残差</h4><p>④ 选整体：Ajay 2018 在 2D 任务上可以，Act-FIGNet 的 baseline 和我们的复现在插入任务上都发散。它可以在任何地方凭空加力，和约束打架。</p></div>
+      <div class="card"><h4><span class="tag no">在本任务上失败</span> 全局残差</h4><p>④ 选整体：Ajay 2018 在 2D 推动上可以；但在插入任务上，Act-FIGNet 的 baseline（5.21 → 6.63 mm）和我们同条件的复现（4.68 → 12.05 mm）都比不加修正更差，而同条件下按接触点修正有效（4.18 mm）。我们的解释：整体修正可以在没接触的地方凭空加力，和不穿透约束打架。只试过 MLP 实现，其他变体未验证。</p></div>
       <div class="card"><h4><span class="tag no">走不通</span> 隐式编码接触</h4><p>② 不显式表示接触在哪（Tracy 2023）：控制够用，换几何失效。几何条件必须显式。</p></div>
       <div class="card"><h4><span class="tag no">走不通</span> 纯隐空间世界模型</h4><p>③ 全部丢掉：分布外差、不可解释，与"泛化、可解释"目标冲突。</p></div>
       <div class="card"><h4><span class="tag no">走不通</span> 学自由空间动力学</h4><p>我们的诊断：自由空间残差是噪声（见 2.4），多帧历史也解释不了。⑥ 里没有信号可学。</p></div>
