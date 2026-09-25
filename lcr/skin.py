@@ -15,29 +15,63 @@ from scipy.spatial import ConvexHull
 from . import data as D
 from .sim import TOOL_BODY, _planes_for_geom
 
-K_POINTS = 200
+K_POINTS = 384
+EDGE_STEP = 4e-3         # one edge sample per 4 mm of hull edge length
+TIP_FRACTION = 0.8       # share of points on the tool tip (the part that enters the socket)
 MARGIN = 3e-3
 N_SKIN_FEAT = 15
 
 
 def _sample_hull(V, n, rng):
+    """n points on the convex hull of V: all hull vertices and edge midpoints first (contacts of
+    polygonal pegs happen at edges and corners), the remainder area-weighted on faces.
+    Returns points, outward normals (vertex/edge normals = mean of adjacent faces), edge distance."""
     hull = ConvexHull(V)
     tri = V[hull.simplices]
-    normals = hull.equations[:, :3]
-    areas = 0.5 * np.linalg.norm(np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0]), axis=1)
-    idx = rng.choice(len(tri), size=n, p=areas / areas.sum())
-    r1, r2 = np.sqrt(rng.random(n)), rng.random(n)
-    a, b, c = tri[idx, 0], tri[idx, 1], tri[idx, 2]
-    pts = (1 - r1)[:, None] * a + (r1 * (1 - r2))[:, None] * b + (r1 * r2)[:, None] * c
-    # distance to nearest hull edge (flat-face interior vs. edge/corner)
-    edges = np.unique(np.sort(np.concatenate([hull.simplices[:, [0, 1]], hull.simplices[:, [1, 2]],
-                                              hull.simplices[:, [0, 2]]]), axis=1), axis=0)
+    fn = hull.equations[:, :3]
+    edges_raw = np.concatenate([hull.simplices[:, [0, 1]], hull.simplices[:, [1, 2]], hull.simplices[:, [0, 2]]])
+    face_of_edge = np.repeat(np.arange(len(tri)), 3)
+    key = np.sort(edges_raw, axis=1)
+    edges, inv = np.unique(key, axis=0, return_inverse=True)
+    inv = inv.reshape(-1)
+    edge_n = np.zeros((len(edges), 3))
+    np.add.at(edge_n, inv, fn[face_of_edge])
+    vert_ids = np.unique(hull.simplices)
+    vert_n = np.zeros((len(V), 3))
+    for f, sim in enumerate(hull.simplices):
+        vert_n[sim] += fn[f]
+    unit = lambda x: x / (np.linalg.norm(x, axis=1, keepdims=True) + 1e-12)
+    P = [V[vert_ids]]; N = [unit(vert_n[vert_ids])]
+    # interior edge samples, one per EDGE_STEP of length (deepest contact of a polygonal peg lies on an edge)
+    p0, p1 = V[edges[:, 0]], V[edges[:, 1]]
+    lengths = np.linalg.norm(p1 - p0, axis=1)
+    cand_e, cand_t = [], []
+    for e, L in enumerate(lengths):
+        m = int(L / EDGE_STEP)
+        if m > 0:
+            ts = np.linspace(0, 1, m + 2)[1:-1]
+            cand_e += [e] * len(ts); cand_t += list(ts)
+    cand_e, cand_t = np.array(cand_e, int), np.array(cand_t)
+    budget = max(n - len(P[0]), 0)
+    if len(cand_e) > budget:
+        keep = rng.choice(len(cand_e), size=budget, replace=False)
+        cand_e, cand_t = cand_e[keep], cand_t[keep]
+    P.append(p0[cand_e] + cand_t[:, None] * (p1[cand_e] - p0[cand_e])); N.append(unit(edge_n[cand_e]))
+    n_face = max(n - len(P[0]) - len(P[1]), 0)
+    if n_face > 0:
+        areas = 0.5 * np.linalg.norm(np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0]), axis=1)
+        idx = rng.choice(len(tri), size=n_face, p=areas / areas.sum())
+        r1, r2 = np.sqrt(rng.random(n_face)), rng.random(n_face)
+        a, b, c = tri[idx, 0], tri[idx, 1], tri[idx, 2]
+        P.append((1 - r1)[:, None] * a + (r1 * (1 - r2))[:, None] * b + (r1 * r2)[:, None] * c)
+        N.append(fn[idx])
+    pts = np.concatenate(P)[:n]; nrm = np.concatenate(N)[:n]
     p0, p1 = V[edges[:, 0]], V[edges[:, 1]]
     d = p1 - p0
     t = np.clip(((pts[:, None, :] - p0[None]) * d[None]).sum(-1) / (d * d).sum(-1)[None], 0, 1)
     closest = p0[None] + t[..., None] * d[None]
     edge_dist = np.linalg.norm(pts[:, None, :] - closest, axis=-1).min(1)
-    return pts, normals[idx], edge_dist
+    return pts, nrm, edge_dist
 
 
 class SkinGeometry:
@@ -46,12 +80,13 @@ class SkinGeometry:
     def __init__(self, sim, k=K_POINTS, seed=0):
         m = sim.m
         rng = np.random.default_rng(seed)
-        n_geom = len(sim.tool_geoms)
+        tips = [g for g in sim.tool_geoms if "tool_tip" in m.geom(g).name]
         pts, nrm, edg = [], [], []
         for g in sim.tool_geoms:
-            A, b = sim.planes[g]
+            n_g = int(k * TIP_FRACTION / max(len(tips), 1)) if g in tips else \
+                int(k * (1 - TIP_FRACTION) / max(len(sim.tool_geoms) - len(tips), 1))
             V = self._verts(m, g)
-            p, n, e = _sample_hull(V, k // n_geom, rng)
+            p, n, e = _sample_hull(V, n_g, rng)
             Rg = D.quat_to_mat(m.geom_quat[g])
             pts.append(m.geom_pos[g] + p @ Rg.T)
             nrm.append(n @ Rg.T)

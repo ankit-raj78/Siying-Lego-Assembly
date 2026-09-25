@@ -15,7 +15,8 @@ import numpy as np
 import torch
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from lcr.models import LCR, GlobalResidual, BlackBox, WRENCH_SCALE  # noqa: E402
+from lcr.models import LCR, GlobalResidual, BlackBox, SkinNet, WRENCH_SCALE  # noqa: E402
+from lcr import skin_data  # noqa: E402
 
 KEYS = ["feats", "R", "r", "lam", "mask", "glob", "pose", "W0", "JW", "e0", "J", "obs", "delta", "dWref"]
 
@@ -28,20 +29,27 @@ def load(name, frac=1.0, seed=0):
             return zz[k]
         return np.zeros((len(zz["obs"]), 6), np.float32)   # dWref = 0 for samples linearised at dW = 0
     z = {k: np.concatenate([get(zz, k) for zz in zs]) for k in KEYS}
+    z["tool"] = np.concatenate([zz["tool"] if "tool" in zz.files else skin_data.tool_ids(nm, len(zz["obs"]))
+                                for nm, zz in zip(names, zs)]).astype(np.int64)
     n = len(z["obs"])
     idx = np.arange(n)
     if frac < 1.0:   # subsample whole episodes-worth of steps uniformly
         idx = np.sort(np.random.default_rng(seed).choice(n, int(n * frac), replace=False))
-    return {k: torch.from_numpy(z[k][idx]) for k in KEYS}
+    return {k: torch.from_numpy(z[k][idx]) for k in KEYS + ["tool"]}
 
 
 def build(kind):
     return {"lcr": lambda: LCR(), "lcr_nogeom": lambda: LCR(use_geom=False),
             "lcr_noattn": lambda: LCR(attention=False), "global": lambda: GlobalResidual(),
-            "blackbox": lambda: BlackBox()}[kind]()
+            "blackbox": lambda: BlackBox(), "skin": lambda: SkinNet()}[kind]()
+
+
+GEO = {}
 
 
 def losses(model, kind, b, st, beta=1.0, gamma=1e-3):
+    if kind == "skin":
+        b = dict(b, **GEO["bundle"].batch(b))
     if kind == "blackbox":
         out = model(b)
         ld = (((out[:, :6] - b["delta"] / st["sd"]) ** 2)).mean()
@@ -84,6 +92,8 @@ def main():
     tr, va = load(a.train, a.frac), load(a.val)
     st = {"so": tr["obs"].std(0), "sd": tr["delta"].std(0)}
     model = build(a.model)
+    if a.model == "skin":
+        GEO["bundle"] = skin_data.GeometryBundle()
     if a.init:
         model.load_state_dict(torch.load(f"results/models/{a.init}.pt", weights_only=False)["state"])
     opt = torch.optim.Adam(model.parameters(), lr=a.lr)

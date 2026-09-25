@@ -70,7 +70,7 @@ def process(job):
                                      D.rot_delta_world(ep["quat"][t], ep["quat"][t + 1])])
         rows.append(dict(feats=f["feats"], R=f["R"], r=f["r"], lam=f["lam"], mask=f["mask"], glob=f["glob"],
                          pose=pose_feat.astype(np.float32), W0=W0, JW=JW, e0=e0, J=J, obs=ep["obs"][t],
-                         delta=true_delta, ep=ep_idx, t=t))
+                         delta=true_delta, ep=ep_idx, t=t, tool={"cylinder": 0, "hexagon": 1, "square": 2}.get(sim.tool_type, -1)))
     return rows
 
 
@@ -79,7 +79,7 @@ def run(splits, stride, out, workers=4, offset=0):
     with Pool(workers) as pool:
         chunks = pool.map(process, jobs, chunksize=4)
     rows = [r for c in chunks for r in c]
-    arr = {k: np.stack([r[k] for r in rows]).astype(np.float32 if k not in ("ep", "t") else np.int32)
+    arr = {k: np.stack([r[k] for r in rows]).astype(np.float32 if k not in ("ep", "t", "tool") else np.int32)
            for k in rows[0]}
     os.makedirs(os.path.dirname(out), exist_ok=True)
     np.savez(out, **arr)

@@ -89,7 +89,7 @@ def process(job):
             delta = np.concatenate([ep["pos"][t + 1] - ep["pos"][t], D.rot_delta_world(ep["quat"][t], ep["quat"][t + 1])])
             rows.append(dict(feats=f["feats"], R=f["R"], r=f["r"], lam=f["lam"], mask=f["mask"], glob=f["glob"],
                              pose=pose_feat(p_now, q_now, ref), W0=W0, JW=JW, e0=e0, J=J, obs=ep["obs"][t],
-                             delta=delta, dWref=dW_ref, ep=ep_idx, t=t, k=k))
+                             delta=delta, dWref=dW_ref, ep=ep_idx, t=t, k=k, tool={"cylinder": 0, "hexagon": 1, "square": 2}.get(sim.tool_type, -1)))
             Ph.append(p0); Qh.append(q0)
     return rows
 
@@ -112,6 +112,6 @@ if __name__ == "__main__":
     with Pool(4, initializer=init, initargs=(vars(a),)) as pool:
         chunks = pool.map(process, jobs, chunksize=4)
     rows = [r for c in chunks for r in c]
-    arr = {k: np.stack([r[k] for r in rows]).astype(np.int32 if k in ("ep", "t", "k") else np.float32) for k in rows[0]}
+    arr = {k: np.stack([r[k] for r in rows]).astype(np.int32 if k in ("ep", "t", "k", "tool") else np.float32) for k in rows[0]}
     np.savez(a.out, **arr)
     print(f"{a.out}: {len(rows)} on-policy samples; mean |e0| pos {np.linalg.norm(arr['e0'][:, :3], axis=1).mean()*1000:.3f} mm")

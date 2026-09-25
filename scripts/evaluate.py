@@ -17,13 +17,14 @@ import torch
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from lcr import data as D                                         # noqa: E402
-from lcr.models import LCR, GlobalResidual, BlackBox              # noqa: E402
+from lcr.models import LCR, GlobalResidual, BlackBox, SkinNet     # noqa: E402
+from lcr.skin import SkinGeometry                                 # noqa: E402
 from lcr.rollout import rollout, pose_errors, wrench_metrics     # noqa: E402
 from lcr.sim import AdmSim, SimParams                             # noqa: E402
 
 H = 100
 KIND = {"lcr": LCR, "lcr_nogeom": lambda: LCR(use_geom=False), "lcr_noattn": lambda: LCR(attention=False),
-        "global": GlobalResidual, "blackbox": BlackBox}
+        "global": GlobalResidual, "blackbox": BlackBox, "skin": SkinNet}
 
 
 def load_model(name):
@@ -48,6 +49,17 @@ def make_residual(model, ref):
         p, q = sim.pose()
         b = {k: torch.from_numpy(np.asarray(ft[k])[None]) for k in ["feats", "R", "r", "lam", "mask", "glob"]}
         b["pose"] = torch.from_numpy(pose_feat(p, q, ref)[None])
+        with torch.no_grad():
+            return model(b)[0].numpy().astype(np.float64)
+    return f
+
+
+def make_skin_residual(model, geo):
+    def f(sim, a, v, w):
+        p, q = sim.pose()
+        ft = geo.features(p, q, v, w, a)
+        b = {k: torch.from_numpy(np.asarray(ft[k])[None]) for k in ["feats", "mask", "r", "g", "glob"]}
+        b["W0"] = torch.from_numpy(sim.contact_wrench()[None].astype(np.float32))   # after sim.forward(a)
         with torch.no_grad():
             return model(b)[0].numpy().astype(np.float64)
     return f
@@ -84,7 +96,9 @@ def job(args):
     kind = "base"
     if method not in ("base",):
         model, st, kind = load_model(method)
-        if kind != "blackbox":
+        if kind == "skin":
+            residual = make_skin_residual(model, SkinGeometry(sim))
+        elif kind != "blackbox":
             residual = make_residual(model, ref)
     run = (lambda ep, t0, h: bb_rollout(model, st, ep, t0, h, ref)) if kind == "blackbox" else \
           (lambda ep, t0, h: rollout(sim, ep, t0, h, residual))
