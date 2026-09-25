@@ -233,7 +233,7 @@ a{color:var(--accent)}
       <tr class="ours"><td>LCR（精细辨识 + 几何修正）</td><td class="n">4.18 / 0.91</td><td class="n">4.35 / 0.81</td><td class="n">8.18 / 1.22</td><td class="n">3.60 / 0.44</td><td class="n">1.15</td><td class="n">3.0 ms</td></tr>
       <tr class="ours"><td><b>LCR + DAgger（最佳）</b></td><td class="n"><b>3.55 / 0.63</b></td><td class="n"><b>3.76 / 0.75</b></td><td class="n">8.37 / 1.62</td><td class="n">4.26 / 0.59</td><td class="n">1.27</td><td class="n">3.0 ms</td></tr>
       <tr class="ours"><td>Skin：表面 SDF 场（无门控）</td><td class="n">发散（2 条不稳定）</td><td class="n">15.13 / 1.63</td><td class="n">发散（1 条不稳定）</td><td class="n">5.97 / 2.45</td><td class="n">1.35</td><td class="n">8.0 ms</td></tr>
-      <tr class="ours dim"><td>Skin：接触门控版</td><td class="n" colspan="6">训练中（第 5/20 轮验证损失 0.62，仍高于无门控的 0.53 和 LCR 的 0.42）；结果出来后补到这一行</td></tr>
+      <tr class="ours dim"><td>Skin：接触门控版</td><td class="n" colspan="6">训练到第 5/20 轮停止：验证损失 0.62，仍高于无门控的 0.53 和 LCR 的 0.42，门控没有救回来</td></tr>
     </table></div>
     <p class="note">姿态在 DAgger 后与 Act-FIGNet 持平（0.63° vs 0.64°），位置差距从 65% 缩到 24%。DAgger 让分布外姿态变差（专家 1.22° → 1.62°），因为在线数据只覆盖训练用的随机策略。</p>
   </section>
