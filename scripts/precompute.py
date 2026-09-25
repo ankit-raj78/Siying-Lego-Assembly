@@ -41,13 +41,13 @@ def _get(split):
 
 
 def process(job):
-    split, ep_idx, stride = job
+    split, ep_idx, stride, offset = job
     eps, sim = _get(split)
     ref = sim.socket_ref()
     ep = eps[ep_idx]
     rows = []
     T = len(ep["pos"])
-    for t in range(2, T - 1, stride):
+    for t in range(2 + offset, T - 1, stride):
         v, w = D.backward_velocity(ep["pos"], ep["quat"], t)
         sim.set_state(ep["pos"][t], ep["quat"][t], v, w)
         sim.forward(ep["action"][t])
@@ -74,8 +74,8 @@ def process(job):
     return rows
 
 
-def run(splits, stride, out, workers=4):
-    jobs = [(s, i, stride) for s in splits for i in range(D.manifest()[s]["n_episodes"])]
+def run(splits, stride, out, workers=4, offset=0):
+    jobs = [(s, i, stride, offset) for s in splits for i in range(D.manifest()[s]["n_episodes"])]
     with Pool(workers) as pool:
         chunks = pool.map(process, jobs, chunksize=4)
     rows = [r for c in chunks for r in c]
@@ -90,6 +90,7 @@ def run(splits, stride, out, workers=4):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--which", default="all")
+    ap.add_argument("--offset", type=int, default=0, help="start step offset (1 = the other half at stride 2)")
     a = ap.parse_args()
     todo = {
         "train": (D.TRAIN_SPLITS, 2), "val": (D.VAL_SPLITS, 2),
@@ -98,4 +99,4 @@ if __name__ == "__main__":
     }
     for name, (splits, stride) in todo.items():
         if a.which in ("all", name):
-            run(splits, stride, f"cache/{name}.npz")
+            run(splits, stride, f"cache/{name}{'_off%d' % a.offset if a.offset else ''}.npz", offset=a.offset)

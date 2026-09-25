@@ -21,7 +21,9 @@ KEYS = ["feats", "R", "r", "lam", "mask", "glob", "pose", "W0", "JW", "e0", "J",
 
 
 def load(name, frac=1.0, seed=0):
-    z = np.load(f"cache/{name}.npz")
+    names = name.split("+")                      # e.g. "train+train_off1" = all 400k samples
+    zs = [np.load(f"cache/{nm}.npz") for nm in names]
+    z = {k: np.concatenate([zz[k] for zz in zs]) for k in KEYS}
     n = len(z["obs"])
     idx = np.arange(n)
     if frac < 1.0:   # subsample whole episodes-worth of steps uniformly
