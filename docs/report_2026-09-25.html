@@ -166,7 +166,6 @@ a{color:var(--accent)}
         <circle class="pt" cx="330" cy="290" r="7"/><text class="lb" x="342" y="286">ContactNets（物体级）</text>
         <circle class="pt" cx="300" cy="230" r="7"/><text class="lb" x="312" y="226">QuasiSim（仿真到仿真）</text>
         <circle class="pt ours" cx="230" cy="230" r="9"/><text class="lb ours" x="150" y="212">LCR（我们）</text>
-        <circle class="pt ours" cx="250" cy="130" r="9"/><text class="lb ours" x="262" y="126">Skin（我们，表面点）</text>
         <circle class="pt paper" cx="600" cy="130" r="8"/><text class="lb" x="612" y="126">Act-FIGNet / FIGNet</text>
         <circle class="pt paper" cx="640" cy="60" r="7"/><text class="lb" x="652" y="56">GNS</text>
         <circle class="pt paper" cx="560" cy="330" r="7"/><text class="lb" x="572" y="345">隐空间世界模型 / 推理时替换仿真</text>
@@ -232,8 +231,6 @@ a{color:var(--accent)}
       <tr class="ours"><td>LCR（3 种子，首次辨识的基础）</td><td class="n">4.73 ± 0.01 / 0.96</td><td class="n">5.07 / 0.91</td><td class="n">9.08 / 1.22</td><td class="n">4.36 / 0.51</td><td class="n">1.14</td><td class="n">3.8 ms</td></tr>
       <tr class="ours"><td>LCR（精细辨识 + 几何修正）</td><td class="n">4.18 / 0.91</td><td class="n">4.35 / 0.81</td><td class="n">8.18 / 1.22</td><td class="n">3.60 / 0.44</td><td class="n">1.15</td><td class="n">3.0 ms</td></tr>
       <tr class="ours"><td><b>LCR + DAgger（最佳）</b></td><td class="n"><b>3.55 / 0.63</b></td><td class="n"><b>3.76 / 0.75</b></td><td class="n">8.37 / 1.62</td><td class="n">4.26 / 0.59</td><td class="n">1.27</td><td class="n">3.0 ms</td></tr>
-      <tr class="ours"><td>Skin：表面 SDF 场（无门控）</td><td class="n">发散（2 条不稳定）</td><td class="n">15.13 / 1.63</td><td class="n">发散（1 条不稳定）</td><td class="n">5.97 / 2.45</td><td class="n">1.35</td><td class="n">8.0 ms</td></tr>
-      <tr class="ours dim"><td>Skin：接触门控版</td><td class="n" colspan="6">训练到第 5/20 轮停止：验证损失 0.62，仍高于无门控的 0.53 和 LCR 的 0.42，门控没有救回来</td></tr>
     </table></div>
     <p class="note">姿态在 DAgger 后与 Act-FIGNet 持平（0.63° vs 0.64°），位置差距从 65% 缩到 24%。DAgger 让分布外姿态变差（专家 1.22° → 1.62°），因为在线数据只覆盖训练用的随机策略。</p>
   </section>
@@ -249,7 +246,6 @@ a{color:var(--accent)}
       <tr><td>DAgger 两轮</td><td>−14%、再 −2%；OOD 姿态变差</td><td><span class="tag part">递减</span> 累积误差是主要杠杆，但受在线数据的动作分布限制</td></tr>
       <tr><td>控制器模型（选项 1）</td><td>线性修正力：自由空间 −15%，接触时 +60%；逐轴惯量：训练内变差</td><td><span class="tag no">否</span> 自由空间残差不可学（见 2.4）</td></tr>
       <tr><td>几何标定（选项 2）</td><td>0.45 mm 修正 −2–3%；1 mm 时 OOD 姿态 +9%</td><td><span class="tag part">小</span> 只保留物理可解释的量</td></tr>
-      <tr><td>Skin 表面场（无门控）</td><td>验证损失 0.53 vs LCR 0.42（力更准、运动更差）；推演在见过的工具和专家策略上发散，方形 15.1 mm，绕圈 6.0 mm；每步 8 ms</td><td><span class="tag no">否</span> 允许"隔空出力"就退化为全局残差的症状；物理约束是必要条件，不是装饰</td></tr>
     </table></div>
   </section>
 
@@ -288,7 +284,6 @@ a{color:var(--accent)}
       <tr><td>H1 一步内的接触事件</td><td>5% 的步占 45% 误差；我们假设修正力在 0.1 s 内不变，Act-FIGNet 也是单步，但它的网络看到的是整张网格的面-面关系，对"快碰上"更敏感</td><td><span class="tag ok">强</span></td><td>把误差最大的 5% 的步按"接触数是否变化"分组；修正力改为每 25–50 ms 调用一次</td></tr>
       <tr><td>H2 测量滤波</td><td>论文说位姿和 F/T 为同步做过滤波；"用 F_{t+1} 解释运动和 F_t 一样好"；学习模型会自然复现滤波后的平滑动力学，物理仿真不会</td><td><span class="tag part">中</span></td><td>在推演输出上叠一个辨识出的线性滤波器；或把 a_{t+1} 作为输入（开环推演里动作序列已知）</td></tr>
       <tr><td>H3 误差累积</td><td>DAgger 一轮 −14%，说明累积是主要杠杆；但第二轮饱和</td><td><span class="tag ok">强</span></td><td>多步展开的线性化损失（串接 2–3 步），不改变在线数据分布</td></tr>
-      <tr><td>H4 力模型的表达能力</td><td>Skin 没有带来收益；去掉几何特征均值也不变</td><td><span class="tag no">弱</span></td><td>已验证，不再投入</td></tr>
       <tr><td>H5 基础求解器的接触分辨率</td><td>子步 5 ms、软接触；求解器可能低估刚性接触的瞬态</td><td><span class="tag part">中</span></td><td>子步改 2 ms 重跑基础评测，看 100 步误差是否下降</td></tr>
     </table></div>
   </section>
@@ -302,9 +297,9 @@ a{color:var(--accent)}
     <h3>3.1 设计原则</h3>
     <div class="cards">
       <div class="rule"><h4>项目要的是什么</h4><p>更快、更少标定、跨几何泛化。精度只是在这个 benchmark 上证明"混合路线不输"的手段，不是目的。LEGO Technic 装配需要的是"给 CAD 就能预测接触力和运动"。</p></div>
-      <div class="rule"><h4>不能动的</h4><p>仿真器负责的部分（不穿透、导纳动力学、自由空间）不学；每个修正必须落在真实接触处并受物理约束。Skin 的失败再次证明：放宽这一条就退化为全局残差。</p></div>
+      <div class="rule"><h4>不能动的</h4><p>仿真器负责的部分（不穿透、导纳动力学、自由空间）不学；每个修正必须落在真实接触处并受物理约束。全局残差的发散已经证明：放宽这一条就会和约束打架。</p></div>
       <div class="rule"><h4>该学的</h4><p>只学仿真器算错的、而且数据里有信号的部分：接触步的力，尤其是接触事件附近。改动前先用诊断确认目标误差项存在且可学。</p></div>
-      <div class="rule"><h4>停止的</h4><p>不再换表示（skin、图）来碰运气；不再调几何标定；不再加 DAgger 轮数。</p></div>
+      <div class="rule"><h4>停止的</h4><p>不再换表示来碰运气；不再调几何标定；不再加 DAgger 轮数。</p></div>
     </div>
   </section>
 
