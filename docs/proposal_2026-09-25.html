@@ -174,11 +174,11 @@ ul.plain{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px;
 
 <section>
   <div class="num">04</div>
-  <h2>Plan</h2>
+  <h2>Next steps</h2>
   <ul class="plain">
-    <li><b>Now:</b> build on the public force-controlled insertion dataset (UR10e + 6-axis F/T; cylinder, hexagon, square tools), which has Act-FIGNet as a fully learned reference.</li>
-    <li><b>Next week:</b> vary the six axes against each other — per-contact vs. global vs. from scratch; with vs. without simulator calibration; with vs. without local geometry — and report which combinations move accuracy, speed and generalization.</li>
-    <li><b>Then:</b> move to Technic parts: simulate many part types from LDraw geometry, collect a small set of real F/T runs for calibration, test on held-out part types.</li>
+    <li><b>Dataset and reference architecture:</b> use an existing real-world insertion dataset with force/torque readings and a published learned-simulator baseline; reproduce that baseline and the plain-simulator baseline on it.</li>
+    <li><b>Preliminary hybrid:</b> build a small contact-correction network on top of the simulator and compare it with both baselines on accuracy, speed and unseen geometry.</li>
+    <li><b>Then:</b> vary the six axes against each other, and move to Technic parts (simulated part library + a small set of real F/T runs).</li>
   </ul>
 </section>
 </div>
