@@ -80,11 +80,11 @@ ul.plain{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px;
   <div class="num">01</div>
   <h2>Research question</h2>
   <div class="rq">
-    <div class="q">A rigid-body simulator already predicts insertion roughly from CAD; its contact model is what is inaccurate. If a network learns only the simulator's error at the contact points, can we reach the accuracy of fully learned simulators while keeping the simulator's speed, physical guarantees and geometry generalization?</div>
+    <div class="q">Can a hybrid neural dynamics model match the accuracy of fully learned simulators for contact-rich insertion, while predicting faster and needing far less calibration data?</div>
     <ul>
-      <li><b>Accuracy</b> — is per-contact correction more accurate and more stable than a global correction or learning from scratch?</li>
-      <li><b>Calibration</b> — can the network absorb most contact-parameter tuning, leaving only a few controller parameters?</li>
-      <li><b>Generalization</b> — are local geometry features at the contact enough to transfer to unseen parts?</li>
+      <li><b>Accuracy</b> — does correcting a simulator at its contact points beat learning contact from scratch?</li>
+      <li><b>Speed and data</b> — how much of that accuracy survives with a small network trained on a fraction of the data?</li>
+      <li><b>Generalization</b> — does the model transfer to part geometries it has not seen?</li>
     </ul>
   </div>
 </section>
