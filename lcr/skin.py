@@ -20,6 +20,7 @@ EDGE_STEP = 4e-3         # one edge sample per 4 mm of hull edge length
 TIP_FRACTION = 0.8       # share of points on the tool tip (the part that enters the socket)
 MARGIN = 3e-3
 N_SKIN_FEAT = 15
+N_ACTIVE = 64            # points kept per sample (closest to the environment); the rest carry no force
 
 
 def _sample_hull(V, n, rng):
@@ -138,8 +139,9 @@ class SkinGeometry:
         f = np.concatenate([np.clip(sdf, -margin, margin)[:, None] / margin, self.nrm, g_b, self.pts / 0.05,
                             vel_b / 5e-3, self.edge[:, None] / 5e-3, (self.nrm * g_b).sum(1, keepdims=True)], 1)
         glob = np.concatenate([v / 5e-3, w / 0.05, cmd[:3] / 10.0, cmd[3:]]).astype(np.float32)
-        return {"feats": f.astype(np.float32), "mask": mask, "r": r_w.astype(np.float32),
-                "g": g_w.astype(np.float32), "glob": glob}
+        keep = np.argsort(sdf)[:N_ACTIVE]                       # closest points only
+        return {"feats": f[keep].astype(np.float32), "mask": mask[keep], "r": r_w[keep].astype(np.float32),
+                "g": g_w[keep].astype(np.float32), "glob": glob}
 
     # ------------------------------------------------------------ torch path (batched)
     def torch_tensors(self, device="cpu"):
@@ -168,4 +170,6 @@ def features_torch(geo, pos, R, v, w, margin=MARGIN):
     g_b = torch.einsum("bki,bij->bkj", g_w, R)
     f = torch.cat([sdf.clamp(-margin, margin)[..., None] / margin, nrm, g_b, pts / 0.05, vel_b / 5e-3,
                    edge[..., None] / 5e-3, (nrm * g_b).sum(-1, keepdim=True)], -1)
-    return f, mask, r_w, g_w
+    keep = torch.topk(-sdf, min(N_ACTIVE, sdf.shape[1]), dim=1).indices          # closest points only
+    gather = lambda x: torch.gather(x, 1, keep[..., None].expand(-1, -1, x.shape[-1])) if x.dim() == 3 else torch.gather(x, 1, keep)
+    return gather(f), gather(mask), gather(r_w), gather(g_w)
