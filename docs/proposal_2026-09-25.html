@@ -136,48 +136,39 @@ ul.plain{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px;
 <section>
   <div class="num">03</div>
   <h2>Design space</h2>
-  <p>Every contact-dynamics model answers the same six questions. Each row is one question, from all-physics on the left to all-learned on the right. The green dots are the starting combination; we will vary rows against each other and report which combinations matter.</p>
+  <p>Every contact-dynamics model answers the same six questions. Each row is one question, from all-physics on the left to all-learned on the right. Existing methods are combinations of one choice per row; we will explore combinations along these axes and report which ones move accuracy, speed and generalization.</p>
   <figure>
     <div class="scroll">
-    <svg class="choices" viewBox="0 0 860 430" role="img" aria-label="Six design axes from physics to learned: geometry representation, contact structure, physics prior, learning unit, force-motion coupling, training signal. The starting combination sits left of center on five axes and at per-contact on the learning-unit axis; the fully learned reference sits right on all six; the plain simulator sits far left on all six">
+    <svg class="choices" viewBox="0 0 860 400" role="img" aria-label="Six design axes of a contact-dynamics model, each running from all-physics on the left to all-learned on the right: geometry representation, contact structure, physics prior, learning unit, force-motion coupling, training signal">
       <defs><marker id="c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--line)"/></marker></defs>
       <text class="lab m" x="250" y="22">all physics</text><text class="lab m" x="810" y="22" text-anchor="end">all learned</text>
-      <circle class="cand" cx="250" cy="412" r="6"/><text class="lab" x="262" y="416">starting combination</text>
-      <circle class="ref" cx="420" cy="412" r="6"/><text class="lab" x="432" y="416">fully learned reference (Act-FIGNet)</text>
-      <circle class="mj" cx="660" cy="412" r="5"/><text class="lab" x="672" y="416">plain simulator</text>
 
       <text class="lab h" x="20" y="62">Geometry</text>
       <line class="axis" x1="250" y1="58" x2="810" y2="58" marker-end="url(#c)"/>
       <text class="lab m" x="250" y="46" text-anchor="middle">parameters</text><text class="lab m" x="390" y="46" text-anchor="middle">mesh</text><text class="lab m" x="530" y="46" text-anchor="middle">mesh + local SDF</text><text class="lab m" x="670" y="46" text-anchor="middle">full mesh graph</text><text class="lab m" x="810" y="46" text-anchor="middle">learned SDF</text>
-      <circle class="mj" cx="390" cy="58" r="5"/><circle class="ref" cx="670" cy="58" r="7"/><circle class="cand" cx="530" cy="58" r="7"/>
 
       <text class="lab h" x="20" y="126">Contact structure</text>
       <line class="axis" x1="250" y1="122" x2="810" y2="122" marker-end="url(#c)"/>
       <text class="lab m" x="250" y="110" text-anchor="middle">solver contacts</text><text class="lab m" x="437" y="110" text-anchor="middle">solver + margin</text><text class="lab m" x="623" y="110" text-anchor="middle">learned collision edges</text><text class="lab m" x="810" y="110" text-anchor="middle">implicit</text>
-      <circle class="mj" cx="250" cy="122" r="5"/><circle class="ref" cx="623" cy="122" r="7"/><circle class="cand" cx="437" cy="122" r="7"/>
 
       <text class="lab h" x="20" y="190">Physics prior</text>
       <line class="axis" x1="250" y1="186" x2="810" y2="186" marker-end="url(#c)"/>
       <text class="lab m" x="250" y="174" text-anchor="middle">full simulator</text><text class="lab m" x="437" y="174" text-anchor="middle">simulator + constrained residual</text><text class="lab m" x="640" y="174" text-anchor="middle">rigid body / equivariance only</text><text class="lab m" x="810" y="174" text-anchor="middle">none</text>
-      <circle class="mj" cx="250" cy="186" r="5"/><circle class="ref" cx="640" cy="186" r="7"/><circle class="cand" cx="437" cy="186" r="7"/>
 
       <text class="lab h" x="20" y="254">Learning unit</text>
       <line class="axis" x1="250" y1="250" x2="810" y2="250" marker-end="url(#c)"/>
       <text class="lab m" x="250" y="238" text-anchor="middle">few parameters</text><text class="lab m" x="390" y="238" text-anchor="middle">global</text><text class="lab m" x="530" y="238" text-anchor="middle">per contact</text><text class="lab m" x="670" y="238" text-anchor="middle">per vertex</text><text class="lab m" x="810" y="238" text-anchor="middle">per particle</text>
-      <circle class="mj" cx="250" cy="250" r="5"/><circle class="ref" cx="670" cy="250" r="7"/><circle class="cand" cx="530" cy="250" r="7"/>
 
       <text class="lab h" x="20" y="318">Force–motion coupling</text>
       <line class="axis" x1="250" y1="314" x2="810" y2="314" marker-end="url(#c)"/>
       <text class="lab m" x="250" y="302" text-anchor="middle">native</text><text class="lab m" x="437" y="302" text-anchor="middle">one wrench, both outputs</text><text class="lab m" x="640" y="302" text-anchor="middle">lever-arm sum, motion separate</text><text class="lab m" x="810" y="302" text-anchor="middle">separate heads</text>
-      <circle class="mj" cx="250" cy="314" r="5"/><circle class="ref" cx="640" cy="314" r="7"/><circle class="cand" cx="437" cy="314" r="7"/>
 
       <text class="lab h" x="20" y="382">Training signal</text>
       <line class="axis" x1="250" y1="378" x2="810" y2="378" marker-end="url(#c)"/>
       <text class="lab m" x="250" y="366" text-anchor="middle">parameter fit</text><text class="lab m" x="450" y="366" text-anchor="middle">one-step + on-policy</text><text class="lab m" x="640" y="366" text-anchor="middle">one-step + noise</text><text class="lab m" x="810" y="366" text-anchor="middle">multi-step / pretraining</text>
-      <circle class="mj" cx="250" cy="378" r="5"/><circle class="ref" cx="640" cy="378" r="7"/><circle class="cand" cx="450" cy="378" r="7"/>
     </svg>
     </div>
-    <figcaption>Read the columns as shapes: the fully learned reference sits on the right of every row, the plain simulator on the far left, and the starting combination keeps five rows near the simulator and moves only the learning unit to per-contact. That one move is the bet: local enough to generalize, few enough units to be fast, expressive enough to fix the simulator's contact model.</figcaption>
+    <figcaption>The same six axes describe the plain simulator (everything on the left), fully learned simulators (everything on the right) and every hybrid in between.</figcaption>
   </figure>
 </section>
 
