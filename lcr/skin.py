@@ -1,0 +1,136 @@
+"""Dense surface-anchored contact field ("virtual tactile skin").
+
+Fixed sample points on the tool's convex collision surfaces (with outward normals and distance to
+the nearest hull edge) are transformed with the tool pose every step, and the environment's signed
+distance is evaluated at each point (max over planes of each convex piece, min over pieces). Points
+closer than `margin` are active. This replaces the solver-selected contact points as the unit the
+network reasons about; the base simulator still handles non-penetration and admittance dynamics.
+
+Both a numpy path (rollouts) and a batched torch path (training from cached poses) are provided.
+"""
+import numpy as np
+import torch
+from scipy.spatial import ConvexHull
+
+from . import data as D
+from .sim import TOOL_BODY, _planes_for_geom
+
+K_POINTS = 200
+MARGIN = 3e-3
+N_SKIN_FEAT = 15
+
+
+def _sample_hull(V, n, rng):
+    hull = ConvexHull(V)
+    tri = V[hull.simplices]
+    normals = hull.equations[:, :3]
+    areas = 0.5 * np.linalg.norm(np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0]), axis=1)
+    idx = rng.choice(len(tri), size=n, p=areas / areas.sum())
+    r1, r2 = np.sqrt(rng.random(n)), rng.random(n)
+    a, b, c = tri[idx, 0], tri[idx, 1], tri[idx, 2]
+    pts = (1 - r1)[:, None] * a + (r1 * (1 - r2))[:, None] * b + (r1 * r2)[:, None] * c
+    # distance to nearest hull edge (flat-face interior vs. edge/corner)
+    edges = np.unique(np.sort(np.concatenate([hull.simplices[:, [0, 1]], hull.simplices[:, [1, 2]],
+                                              hull.simplices[:, [0, 2]]]), axis=1), axis=0)
+    p0, p1 = V[edges[:, 0]], V[edges[:, 1]]
+    d = p1 - p0
+    t = np.clip(((pts[:, None, :] - p0[None]) * d[None]).sum(-1) / (d * d).sum(-1)[None], 0, 1)
+    closest = p0[None] + t[..., None] * d[None]
+    edge_dist = np.linalg.norm(pts[:, None, :] - closest, axis=-1).min(1)
+    return pts, normals[idx], edge_dist
+
+
+class SkinGeometry:
+    """Static geometry for one scene: tool sample points (body frame) and environment planes (world)."""
+
+    def __init__(self, sim, k=K_POINTS, seed=0):
+        m = sim.m
+        rng = np.random.default_rng(seed)
+        n_geom = len(sim.tool_geoms)
+        pts, nrm, edg = [], [], []
+        for g in sim.tool_geoms:
+            A, b = sim.planes[g]
+            V = self._verts(m, g)
+            p, n, e = _sample_hull(V, k // n_geom, rng)
+            Rg = D.quat_to_mat(m.geom_quat[g])
+            pts.append(m.geom_pos[g] + p @ Rg.T)
+            nrm.append(n @ Rg.T)
+            edg.append(e)
+        self.pts = np.concatenate(pts)[:k]                 # (K,3) body frame
+        self.nrm = np.concatenate(nrm)[:k]
+        self.edge = np.concatenate(edg)[:k]
+        self.K = len(self.pts)
+        # environment pieces as world-frame half-spaces, padded to a common plane count
+        mujoco_forward(sim)
+        pieces = []
+        for g in sim.env_geoms:
+            A, b = sim.planes[g]
+            R = sim.d.geom_xmat[g].reshape(3, 3)
+            Aw = A @ R.T
+            pieces.append((Aw, b - Aw @ sim.d.geom_xpos[g]))
+        P = max(len(A) for A, _ in pieces)
+        self.A = np.zeros((len(pieces), P, 3)); self.b = np.full((len(pieces), P), -1e9)
+        for j, (Aw, bw) in enumerate(pieces):
+            self.A[j, :len(Aw)] = Aw; self.b[j, :len(bw)] = bw
+
+    @staticmethod
+    def _verts(m, g):
+        import mujoco
+        if m.geom_type[g] == mujoco.mjtGeom.mjGEOM_MESH:
+            mid = m.geom_dataid[g]
+            a, n = m.mesh_vertadr[mid], m.mesh_vertnum[mid]
+            return np.asarray(m.mesh_vert[a:a + n], np.float64)
+        s = m.geom_size[g]
+        return np.array([[sx, sy, sz] for sx in (-s[0], s[0]) for sy in (-s[1], s[1]) for sz in (-s[2], s[2])])
+
+    # ------------------------------------------------------------ numpy path
+    def sdf(self, P):
+        """Signed distance and outward gradient of the environment at world points P (N,3)."""
+        s = np.einsum("jpk,nk->njp", self.A, P) + self.b[None]      # (N,J,P)
+        s_piece = s.max(2); kstar = s.argmax(2)                      # (N,J)
+        j = s_piece.argmin(1)
+        n = np.arange(len(P))
+        return s_piece[n, j], self.A[j, kstar[n, j]]
+
+    def features(self, pos, quat, v, w, cmd, margin=MARGIN):
+        R = D.quat_to_mat(quat)
+        Pw = pos + self.pts @ R.T
+        sdf, g_w = self.sdf(Pw)
+        mask = (sdf < margin).astype(np.float32)
+        r_w = Pw - pos
+        vel_b = (v[None] + np.cross(w[None], r_w)) @ R
+        g_b = g_w @ R
+        f = np.concatenate([np.clip(sdf, -margin, margin)[:, None] / margin, self.nrm, g_b, self.pts / 0.05,
+                            vel_b / 5e-3, self.edge[:, None] / 5e-3, (self.nrm * g_b).sum(1, keepdims=True)], 1)
+        glob = np.concatenate([v / 5e-3, w / 0.05, cmd[:3] / 10.0, cmd[3:]]).astype(np.float32)
+        return {"feats": f.astype(np.float32), "mask": mask, "r": r_w.astype(np.float32),
+                "g": g_w.astype(np.float32), "glob": glob}
+
+    # ------------------------------------------------------------ torch path (batched)
+    def torch_tensors(self, device="cpu"):
+        t = lambda x: torch.as_tensor(np.asarray(x, np.float32), device=device)
+        return {"pts": t(self.pts), "nrm": t(self.nrm), "edge": t(self.edge), "A": t(self.A), "b": t(self.b)}
+
+
+def mujoco_forward(sim):
+    import mujoco
+    mujoco.mj_forward(sim.m, sim.d)
+
+
+def features_torch(geo, pos, R, v, w, margin=MARGIN):
+    """geo: dict of per-sample tensors (pts (B,K,3), nrm (B,K,3), edge (B,K)) and env (A (J,P,3), b (J,P)).
+    pos (B,3), R (B,3,3) body->world, v/w (B,3) world. Returns feats (B,K,15), mask, r_w, g_w."""
+    pts, nrm, edge, A, b = geo["pts"], geo["nrm"], geo["edge"], geo["A"], geo["b"]
+    Pw = pos[:, None] + torch.einsum("bij,bkj->bki", R, pts)                 # (B,K,3)
+    s = torch.einsum("jpi,bki->bkjp", A, Pw) + b[None, None]                 # (B,K,J,P)
+    s_piece, kstar = s.max(-1)                                               # (B,K,J)
+    sdf, j = s_piece.min(-1)                                                 # (B,K)
+    g_w = A[j, torch.gather(kstar, 2, j[..., None])[..., 0]]                 # (B,K,3)
+    mask = (sdf < margin).float()
+    r_w = Pw - pos[:, None]
+    vel_w = v[:, None] + torch.cross(w[:, None].expand_as(r_w), r_w, dim=-1)
+    vel_b = torch.einsum("bki,bij->bkj", vel_w, R)
+    g_b = torch.einsum("bki,bij->bkj", g_w, R)
+    f = torch.cat([sdf.clamp(-margin, margin)[..., None] / margin, nrm, g_b, pts / 0.05, vel_b / 5e-3,
+                   edge[..., None] / 5e-3, (nrm * g_b).sum(-1, keepdim=True)], -1)
+    return f, mask, r_w, g_w

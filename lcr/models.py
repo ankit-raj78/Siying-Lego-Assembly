@@ -80,3 +80,47 @@ class BlackBox(nn.Module):
 
     def forward(self, b):
         return self.net(torch.cat([b["glob"], b["pose"]], -1))
+
+
+class SkinNet(nn.Module):
+    """Dense surface contact field: a shared per-point MLP over the tool's sample points (with the
+    environment SDF at each point), one pooled context, and per-point forces with physical shaping
+    (normal force pushes the tool away from the environment surface, tangential within a friction
+    cone). Forces are summed with lever arms into a 6-D wrench. A learned scalar alpha rescales the
+    base simulator's own contact wrench so the total normal push can also be reduced."""
+
+    def __init__(self, n_feat=15, n_glob=12, h=64, mu_max=1.0):
+        super().__init__()
+        self.mu_max = mu_max
+        self.enc = mlp(n_feat, 96, h, 3)
+        self.glob = mlp(n_glob, 64, h, 2)
+        self.ctx = mlp(2 * h, h, h, 2)
+        self.head = mlp(2 * h, 64, 3, 2)
+        self.alpha = nn.Linear(2 * h, 1)
+        nn.init.zeros_(self.head[-1].weight)
+        with torch.no_grad():
+            self.head[-1].bias.copy_(torch.tensor([-6.0, 0.0, 0.0]))
+            self.alpha.weight.zero_(); self.alpha.bias.zero_()
+
+    def forward(self, b):
+        x, mask = b["feats"], b["mask"]                       # (B,K,F), (B,K)
+        h = self.enc(x) * mask[..., None]
+        g = self.glob(b["glob"])                              # (B,h)
+        pooled = h.sum(1) / mask.sum(1, keepdim=True).clamp(min=1.0)
+        c = self.ctx(torch.cat([pooled, g], -1))              # (B,h)
+        z = torch.cat([h, c[:, None].expand_as(h)], -1)
+        o = self.head(z)
+        f_n = 10.0 * Fn.softplus(o[..., 0]) * mask            # (B,K) >= 0, along +g (away from env)
+        f_t = 10.0 * o[..., 1:3]
+        nt = f_t.norm(dim=-1, keepdim=True) + 1e-6
+        f_t = f_t * torch.clamp(self.mu_max * f_n[..., None] / nt, max=1.0)
+        gw = b["g"]
+        e = torch.where(gw[..., :1].abs() < 0.9, torch.tensor([1.0, 0, 0], device=gw.device).expand_as(gw),
+                        torch.tensor([0, 1.0, 0], device=gw.device).expand_as(gw))
+        t1 = torch.cross(gw, e, dim=-1); t1 = t1 / (t1.norm(dim=-1, keepdim=True) + 1e-9)
+        t2 = torch.cross(gw, t1, dim=-1)
+        f_w = f_n[..., None] * gw + f_t[..., :1] * t1 + f_t[..., 1:2] * t2
+        F = f_w.sum(1)
+        T = torch.cross(b["r"], f_w, dim=-1).sum(1)
+        alpha = 1.5 * torch.sigmoid(self.alpha(torch.cat([pooled, g], -1)) + 1.0986)   # =1 at init
+        return torch.cat([F, T], -1) + (alpha - 1.0) * b["W0"]
