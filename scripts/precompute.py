@@ -91,6 +91,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--which", default="all")
     ap.add_argument("--offset", type=int, default=0, help="start step offset (1 = the other half at stride 2)")
+    ap.add_argument("--prefix", default="", help="cache file prefix, e.g. s2_ for another base-sim parameter set")
     a = ap.parse_args()
     todo = {
         "train": (D.TRAIN_SPLITS, 2), "val": (D.VAL_SPLITS, 2),
@@ -99,4 +100,4 @@ if __name__ == "__main__":
     }
     for name, (splits, stride) in todo.items():
         if a.which in ("all", name):
-            run(splits, stride, f"cache/{name}{'_off%d' % a.offset if a.offset else ''}.npz", offset=a.offset)
+            run(splits, stride, f"cache/{a.prefix}{name}{'_off%d' % a.offset if a.offset else ''}.npz", offset=a.offset)

@@ -77,10 +77,11 @@ def main():
     ap.add_argument("--init", default="", help="checkpoint name to fine-tune from")
     ap.add_argument("--tag", default="")
     ap.add_argument("--train", default="train")
+    ap.add_argument("--val", default="val")
     a = ap.parse_args()
     torch.manual_seed(a.seed)
     rng = np.random.default_rng(a.seed)
-    tr, va = load(a.train, a.frac), load("val")
+    tr, va = load(a.train, a.frac), load(a.val)
     st = {"so": tr["obs"].std(0), "sd": tr["delta"].std(0)}
     model = build(a.model)
     if a.init:
