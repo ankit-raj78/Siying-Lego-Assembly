@@ -81,11 +81,12 @@ def job(args):
     rng = np.random.default_rng(12345)
     model = st = None
     residual = None
+    kind = "base"
     if method not in ("base",):
-        model, st, _ = load_model(method)
-        if method != "blackbox":
+        model, st, kind = load_model(method)
+        if kind != "blackbox":
             residual = make_residual(model, ref)
-    run = (lambda ep, t0, h: bb_rollout(model, st, ep, t0, h, ref)) if method == "blackbox" else \
+    run = (lambda ep, t0, h: bb_rollout(model, st, ep, t0, h, ref)) if kind == "blackbox" else \
           (lambda ep, t0, h: rollout(sim, ep, t0, h, residual))
     pe, ae, fe_pred, fe_true, n_bad, steps, secs = [], [], [], [], 0, 0, 0.0
     pvec, rvec = [], []
@@ -140,7 +141,7 @@ def main():
     methods_ck = [m if m in ("base",) else m + a.suffix for m in methods]
     methods = methods_ck
     jobs = [(m, s, *cfg[ts]) for m in methods for ts, splits in D.TEST_SETS.items() for s in splits]
-    jobs.sort(key=lambda j: j[0] == "blackbox")
+    jobs.sort(key=lambda j: j[0].startswith("blackbox"))
     with Pool(4) as pool:
         res = pool.map(job, jobs, chunksize=1)
     summary = {"linear_admittance": {ts: {"one_step": m} for ts, m in linear_baseline().items()}}
