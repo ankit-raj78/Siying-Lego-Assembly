@@ -17,13 +17,17 @@ import torch
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from lcr.models import LCR, GlobalResidual, BlackBox, WRENCH_SCALE  # noqa: E402
 
-KEYS = ["feats", "R", "r", "lam", "mask", "glob", "pose", "W0", "JW", "e0", "J", "obs", "delta"]
+KEYS = ["feats", "R", "r", "lam", "mask", "glob", "pose", "W0", "JW", "e0", "J", "obs", "delta", "dWref"]
 
 
 def load(name, frac=1.0, seed=0):
     names = name.split("+")                      # e.g. "train+train_off1" = all 400k samples
     zs = [np.load(f"cache/{nm}.npz") for nm in names]
-    z = {k: np.concatenate([zz[k] for zz in zs]) for k in KEYS}
+    def get(zz, k):
+        if k in zz.files:
+            return zz[k]
+        return np.zeros((len(zz["obs"]), 6), np.float32)   # dWref = 0 for samples linearised at dW = 0
+    z = {k: np.concatenate([get(zz, k) for zz in zs]) for k in KEYS}
     n = len(z["obs"])
     idx = np.arange(n)
     if frac < 1.0:   # subsample whole episodes-worth of steps uniformly
@@ -44,8 +48,9 @@ def losses(model, kind, b, st, beta=1.0, gamma=1e-3):
         lo = (((out[:, 6:] - b["obs"] / st["so"]) ** 2)).mean()
         return lo + beta * ld, lo, ld
     dW = model(b)
-    err = b["e0"] + torch.einsum("bij,bj->bi", b["J"], dW)
-    W = b["W0"] + torch.einsum("bij,bj->bi", b["JW"], dW)
+    ddW = dW - b["dWref"]                      # linearisation point (0, or the model's own output on-policy)
+    err = b["e0"] + torch.einsum("bij,bj->bi", b["J"], ddW)
+    W = b["W0"] + torch.einsum("bij,bj->bi", b["JW"], ddW)
     ld = ((err / st["sd"]) ** 2).mean()
     lo = (((W - b["obs"]) / st["so"]) ** 2).mean()
     lr = ((dW / WRENCH_SCALE) ** 2).mean()
@@ -69,6 +74,7 @@ def main():
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--beta", type=float, default=5.0)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--init", default="", help="checkpoint name to fine-tune from")
     ap.add_argument("--tag", default="")
     ap.add_argument("--train", default="train")
     a = ap.parse_args()
@@ -77,6 +83,8 @@ def main():
     tr, va = load(a.train, a.frac), load("val")
     st = {"so": tr["obs"].std(0), "sd": tr["delta"].std(0)}
     model = build(a.model)
+    if a.init:
+        model.load_state_dict(torch.load(f"results/models/{a.init}.pt", weights_only=False)["state"])
     opt = torch.optim.Adam(model.parameters(), lr=a.lr)
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, a.epochs)
     name = a.model + (f"_{a.tag}" if a.tag else "")

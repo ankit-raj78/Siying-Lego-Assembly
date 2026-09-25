@@ -30,6 +30,7 @@ class SimParams:
     friction: float = 0.6               # stage-0 sysid (results/sysid.json)
     solref_tc: float = 0.1
     solref_dr: float = 1.0
+    solimp: tuple = (0.95, 0.99, 0.001, 0.5, 2.0)
     margin: float = 3e-3
     sub_dt: float = 0.005                # MuJoCo substep; 0.1 s / sub_dt substeps per data step
     cmd_at_origin: bool = True           # commanded torque acts about the tool origin (fits data better)
@@ -76,7 +77,7 @@ class AdmSim:
         for g in self.env_geoms:
             m.geom_friction[g, 0] = params.friction
             m.geom_solref[g] = [params.solref_tc, params.solref_dr]
-            m.geom_solimp[g] = [0.95, 0.99, 0.001, 0.5, 2.0]
+            m.geom_solimp[g] = params.solimp
         self.m = m
         self.d = mujoco.MjData(m)
         self.tool_set = set(self.tool_geoms)
