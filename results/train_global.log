@@ -1,7 +1,0 @@
-[global] epoch  0 train 0.5439  val 0.4780 (obs 0.2852, dyn 0.0386)  6s
-[global] epoch  1 train 0.3575  val 0.4598 (obs 0.2651, dyn 0.0389)  11s
-[global] epoch  2 train 0.3391  val 0.4342 (obs 0.2369, dyn 0.0395)  15s
-[global] epoch  3 train 0.3220  val 0.4190 (obs 0.2203, dyn 0.0397)  19s
-[global] epoch  4 train 0.3136  val 0.4125 (obs 0.2133, dyn 0.0398)  52s
-[global] epoch  5 train 0.3089  val 0.4082 (obs 0.2098, dyn 0.0397)  59s
-[global] epoch  6 train 0.3057  val 0.4060 (obs 0.2071, dyn 0.0398)  64s

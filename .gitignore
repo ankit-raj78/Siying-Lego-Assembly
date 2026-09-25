@@ -4,3 +4,5 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+results/models/
+results/*.log
