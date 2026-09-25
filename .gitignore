@@ -7,3 +7,4 @@ venv/
 results/models/
 results/*.log
 results/*_examples.npy
+MUJOCO_LOG.TXT
