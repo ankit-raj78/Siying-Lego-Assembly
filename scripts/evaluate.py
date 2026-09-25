@@ -88,6 +88,7 @@ def job(args):
     run = (lambda ep, t0, h: bb_rollout(model, st, ep, t0, h, ref)) if method == "blackbox" else \
           (lambda ep, t0, h: rollout(sim, ep, t0, h, residual))
     pe, ae, fe_pred, fe_true, n_bad, steps, secs = [], [], [], [], 0, 0, 0.0
+    pvec, rvec = [], []
     example = None
     for ei, ep in enumerate(eps):
         T = len(ep["pos"])
@@ -98,6 +99,8 @@ def job(args):
             secs += time.perf_counter() - a; steps += H
             e_p, e_a = pose_errors(P, Q, ep, t0)
             pe.append(e_p); ae.append(e_a); n_bad += int(bad)
+            pvec.append(P - ep["pos"][t0 + 1:t0 + H + 1])
+            rvec.append(D.rot_delta_world(ep["quat"][t0 + 1:t0 + H + 1], Q))
             fe_pred.append(W); fe_true.append(ep["obs"][t0:t0 + H])
             if example is None and ei == 0:
                 example = {"t0": int(t0), "P": P, "W": W, "P_true": ep["pos"][t0 + 1:t0 + H + 1],
@@ -108,6 +111,7 @@ def job(args):
             _, _, W, _ = run(ep, t, 1)
             one_pred.append(W[0]); one_true.append(ep["obs"][t])
     return {"method": method, "split": split, "pos_err": np.array(pe), "ang_err": np.array(ae),
+            "pos_vec": np.array(pvec), "rot_vec": np.array(rvec),
             "W_pred": np.concatenate(fe_pred), "W_true": np.concatenate(fe_true),
             "one_pred": np.array(one_pred), "one_true": np.array(one_true), "n_bad": n_bad,
             "ms_per_step": 1000 * secs / steps, "example": example}
@@ -129,9 +133,12 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--methods", default="base,global,lcr,lcr_nogeom,blackbox")
     ap.add_argument("--out", default="results/eval.json")
+    ap.add_argument("--suffix", default="", help="checkpoint suffix, e.g. _full")
     a = ap.parse_args()
     methods = a.methods.split(",")
     cfg = {"test_seen": (4, 4), "square_unseen": (4, 4), "expert_ood": (2, 2), "circle_ood": (2, 2)}
+    methods_ck = [m if m in ("base",) else m + a.suffix for m in methods]
+    methods = methods_ck
     jobs = [(m, s, *cfg[ts]) for m in methods for ts, splits in D.TEST_SETS.items() for s in splits]
     jobs.sort(key=lambda j: j[0] == "blackbox")
     with Pool(4) as pool:
@@ -147,6 +154,8 @@ def main():
                 "rollout_pos_rmse_mm": float(np.sqrt((pe ** 2).mean()) * 1000),
                 "rollout_ori_rmse_deg": float(np.degrees(np.sqrt((ae ** 2).mean()))),
                 "final_pos_err_mm": float(pe[:, -1].mean() * 1000),
+                "rollout_pos_rmse_axis_mm": float(np.sqrt((np.concatenate([r["pos_vec"] for r in rs]) ** 2).mean()) * 1000),
+                "rollout_ori_rmse_axis_deg": float(np.degrees(np.sqrt((np.concatenate([r["rot_vec"] for r in rs]) ** 2).mean()))),
                 "rollout_ft": wrench_metrics(np.concatenate([r["W_pred"] for r in rs]),
                                              np.concatenate([r["W_true"] for r in rs])),
                 "one_step": wrench_metrics(np.concatenate([r["one_pred"] for r in rs]),
@@ -162,7 +171,7 @@ def main():
     for m in summary:
         for ts, v in summary[m].items():
             if "rollout_pos_rmse_mm" in v:
-                print(f"{m:18s} {ts:14s} pos {v['rollout_pos_rmse_mm']:6.2f} mm  ori {v['rollout_ori_rmse_deg']:5.2f} deg  "
+                print(f"{m:18s} {ts:14s} pos {v['rollout_pos_rmse_mm']:6.2f} mm (axis {v['rollout_pos_rmse_axis_mm']:5.2f})  ori {v['rollout_ori_rmse_deg']:5.2f} deg (axis {v['rollout_ori_rmse_axis_deg']:4.2f})  "
                       f"rollF {v['rollout_ft']['force_axis_mean']:5.2f} N  1stepF {v['one_step']['force_axis_mean']:5.2f} N "
                       f"/{v['one_step']['torque_axis_mean']:.4f} Nm  unstable {v['n_unstable']}  {v['ms_per_step']:.2f} ms/step")
             else:
