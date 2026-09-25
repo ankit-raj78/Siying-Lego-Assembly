@@ -90,9 +90,9 @@ class SkinNet(nn.Module):
     a friction cone. Summed with lever arms into a wrench; the residual is taken w.r.t. the simulator's
     exact contact wrench, so the model starts at ~zero correction."""
 
-    def __init__(self, n_feat=19, n_glob=12, h=64, mu_max=1.0):
+    def __init__(self, n_feat=19, n_glob=12, h=64, mu_max=1.0, gate_tol=None, gate_width=2e-4, margin=3e-3):
         super().__init__()
-        self.mu_max = mu_max
+        self.mu_max, self.gate_tol, self.gate_width, self.margin = mu_max, gate_tol, gate_width, margin
         self.enc = mlp(n_feat, 96, h, 3)
         self.glob = mlp(n_glob, 64, h, 2)
         self.ctx = mlp(2 * h, h, h, 2)
@@ -109,7 +109,11 @@ class SkinNet(nn.Module):
         pooled = h.sum(1) / mask.sum(1, keepdim=True).clamp(min=1.0)
         c = self.ctx(torch.cat([pooled, g], -1))
         o = self.head(torch.cat([h, c[:, None].expand_as(h)], -1))
-        f_n = (lam[..., 0].clamp(min=0) * torch.exp(o[..., 0].clamp(-3, 3)) + 10.0 * Fn.softplus(o[..., 1])) * mask
+        add = 10.0 * Fn.softplus(o[..., 1])
+        if self.gate_tol is not None:                              # no added force without (near-)contact
+            sdf = x[..., 0] * self.margin
+            add = add * torch.sigmoid((self.gate_tol - sdf) / self.gate_width)
+        f_n = (lam[..., 0].clamp(min=0) * torch.exp(o[..., 0].clamp(-3, 3)) + add) * mask
         f_t = lam[..., 1:] + 10.0 * o[..., 2:4]
         nt = f_t.norm(dim=-1, keepdim=True) + 1e-6
         f_t = f_t * torch.clamp(self.mu_max * f_n[..., None] / nt, max=1.0)

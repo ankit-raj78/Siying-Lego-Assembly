@@ -41,14 +41,15 @@ def load(name, frac=1.0, seed=0):
 def build(kind):
     return {"lcr": lambda: LCR(), "lcr_nogeom": lambda: LCR(use_geom=False),
             "lcr_noattn": lambda: LCR(attention=False), "global": lambda: GlobalResidual(),
-            "blackbox": lambda: BlackBox(), "skin": lambda: SkinNet()}[kind]()
+            "blackbox": lambda: BlackBox(), "skin": lambda: SkinNet(),
+            "skin_gated": lambda: SkinNet(gate_tol=5e-4)}[kind]()
 
 
 GEO = {}
 
 
 def losses(model, kind, b, st, beta=1.0, gamma=1e-3):
-    if kind == "skin":
+    if kind in ("skin", "skin_gated"):
         b = dict(b, **GEO["bundle"].batch(b))
     if kind == "blackbox":
         out = model(b)
@@ -92,7 +93,7 @@ def main():
     tr, va = load(a.train, a.frac), load(a.val)
     st = {"so": tr["obs"].std(0), "sd": tr["delta"].std(0)}
     model = build(a.model)
-    if a.model == "skin":
+    if a.model in ("skin", "skin_gated"):
         GEO["bundle"] = skin_data.GeometryBundle()
     if a.init:
         model.load_state_dict(torch.load(f"results/models/{a.init}.pt", weights_only=False)["state"])

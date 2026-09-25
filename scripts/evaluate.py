@@ -24,7 +24,7 @@ from lcr.sim import AdmSim, SimParams                             # noqa: E402
 
 H = 100
 KIND = {"lcr": LCR, "lcr_nogeom": lambda: LCR(use_geom=False), "lcr_noattn": lambda: LCR(attention=False),
-        "global": GlobalResidual, "blackbox": BlackBox, "skin": SkinNet}
+        "global": GlobalResidual, "blackbox": BlackBox, "skin": SkinNet, "skin_gated": lambda: SkinNet(gate_tol=5e-4)}
 
 
 def load_model(name):
@@ -100,7 +100,7 @@ def job(args):
     kind = "base"
     if method not in ("base",):
         model, st, kind = load_model(method)
-        if kind == "skin":
+        if kind in ("skin", "skin_gated"):
             residual = make_skin_residual(model, SkinGeometry(sim))
         elif kind != "blackbox":
             residual = make_residual(model, ref)
