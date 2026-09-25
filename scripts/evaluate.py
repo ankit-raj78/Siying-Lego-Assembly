@@ -155,6 +155,8 @@ def main():
                 "rollout_pos_rmse_mm": float(np.sqrt((pe ** 2).mean()) * 1000),
                 "rollout_ori_rmse_deg": float(np.degrees(np.sqrt((ae ** 2).mean()))),
                 "final_pos_err_mm": float(pe[:, -1].mean() * 1000),
+                "pos_err_curve_mm": [float(x) for x in pe.mean(0) * 1000],
+                "ori_err_curve_deg": [float(x) for x in np.degrees(ae.mean(0))],
                 "rollout_pos_rmse_axis_mm": float(np.sqrt((np.concatenate([r["pos_vec"] for r in rs]) ** 2).mean()) * 1000),
                 "rollout_ori_rmse_axis_deg": float(np.degrees(np.sqrt((np.concatenate([r["rot_vec"] for r in rs]) ** 2).mean()))),
                 "rollout_ft": wrench_metrics(np.concatenate([r["W_pred"] for r in rs]),
